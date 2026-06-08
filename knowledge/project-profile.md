@@ -11,7 +11,7 @@ A single-user job-aggregation web app that runs pre-defined filters across the m
 
 ## What this project is
 
-The owner currently has to check several job boards by hand to find newly-listed roles worth applying to. homejobboard solves that by running a set of pre-defined filters across the major boards on a schedule, normalizing the listings, LLM-scoring each new job for personal fitness, and ranking them. The sole consumer is the owner, via a Next.js web UI that shows the ranked jobs for reference and offers a quick path to apply. The defining constraints: single-user and self-hosted only, with no multi-tenancy and no auth. Concrete board integrations and the "send out" mechanism are deferred to a later POC.
+The owner currently has to check several job boards by hand to find newly-listed roles worth applying to. homejobboard solves that by running a set of pre-defined filters across the major boards on a schedule, normalizing the listings, LLM-scoring each new job for personal fitness, and ranking them. The sole consumer is the owner, via a Next.js web UI that shows the ranked jobs for reference and offers a quick path to apply. The defining constraints: single-user and self-hosted only, with no multi-tenancy and no auth. Source selection + access is decided ([[job-source-access-catalog]], ADR 0002/0003); the "send out" mechanism is still open. Build plan: `docs/milestones/00-overview.md`.
 
 ## Stack at a glance
 

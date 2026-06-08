@@ -42,4 +42,7 @@ The skill picks a slug, writes the file with the right frontmatter, and updates 
 
 ## Index
 
-*(No entries yet. The first entry will land here after `/devkit-init` seeds `project-profile.md`.)*
+- [project-profile](project-profile.md) — `project` — who homejobboard is and its stack at a glance.
+- [job-source-access-catalog](job-source-access-catalog.md) — `reference` — how to access each selected job source (endpoints, auth, fields, just-listed); durable extract of the 2026-06-08 research.
+- [ats-company-slug-sourcing](ats-company-slug-sourcing.md) — `project` — ATS sources are per-company with no enumerate-all endpoint; we must seed/grow a company-token list.
+- [antibot-blocked-boards](antibot-blocked-boards.md) — `reference` — which boards are walled/gated/dropped and why, so we don't re-research them.
