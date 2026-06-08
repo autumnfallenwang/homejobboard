@@ -1,0 +1,22 @@
+{
+  "project_name": "homejobboard",
+  "project_tagline": "A single-user job-aggregation web app that runs pre-defined filters across the major job boards, LLM-scores newly-listed jobs for fitness, and ranks them for quick reference and applying.",
+  "primary_language": "typescript",
+  "package_manager": "pnpm",
+  "today": "2026-06-08",
+  "languages": ["typescript"],
+  "lint": {"typescript": "biome"},
+  "test": {"typescript": "vitest"},
+  "typecheck": {"typescript": "tsc"},
+  "architecture_sketch": "homejobboard is a personal job-aggregation web app (single-user). A Hono + Zod API (apps/api, port 3001) runs scheduled scrapers/fetchers against the major job boards using a set of pre-defined filters, normalizes the listings, and stores them in PostgreSQL via Drizzle. New listings are scored for fitness by an LLM (via the home cluster's llmgw gateway) and ranked. A Next.js App Router frontend (apps/web, port 3000) shows the freshly-listed, ranked jobs for reference and offers a quick way to send out applications. packages/shared holds shared Zod schemas/types. Deployed to the home k3s cluster via a Helm chart (deploy/chart) under Argo CD GitOps, mirroring the sibling homenews/homework/homecal repos. Concrete job-board targets and the application 'send out' mechanism are deferred to a POC.",
+  "constraints": "Single-user, self-hosted only. No multi-tenancy and no auth. Specific job-board integrations and the application 'send out' mechanism are intentionally deferred to a later POC and not yet decided.",
+  "frontend": true,
+  "enabled_plugins": {
+    "context7@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "chrome-devtools-mcp@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true
+  },
+  "plugins_missing_install": []
+}
