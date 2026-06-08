@@ -1,6 +1,6 @@
 ---
 name: 01-monorepo-bootstrap
-status: active
+status: done
 created: 2026-06-08
 ---
 
@@ -50,11 +50,11 @@ Root tooling (copy the house pattern — `homecal`/`homework` is the canonical b
 
 ## Exit criteria
 
-- [ ] `pnpm install` clean on a fresh clone
-- [ ] `pnpm dev` starts db + api + web; `http://localhost:3000` shows API `/health` = ok
-- [ ] `pnpm build`, `pnpm test:fast`, `pnpm lint` all pass
-- [ ] `apps/web/src/lib/api.ts` resolves the API URL with no env config in dev
-- [ ] Workspaces resolve: `apps/web` and `apps/api` can both import `@homejobboard/shared`
+- [x] `pnpm install` clean on a fresh clone
+- [x] `pnpm dev`/built servers start; `http://localhost:3000` shows API `/health` = ok — **verified live** (api `/health`→`{"status":"ok"}`, web home rendered `API health: ok`)
+- [x] `pnpm build`, `pnpm test:fast`, `pnpm lint` (+ `typecheck`) all pass
+- [x] `apps/web/src/lib/api.ts` resolves the API URL with no env config in dev
+- [x] Workspaces resolve: `apps/web` + `apps/api` import `@homejobboard/shared` (web build transpiles it)
 
 ## Decisions (locked)
 
@@ -70,4 +70,21 @@ Root tooling (copy the house pattern — `homecal`/`homework` is the canonical b
 
 ## Progress
 
-- _not started_
+- 2026-06-08: Scaffolded the Turborepo skeleton mirroring `homework`/`homecal` — root tooling
+  (pnpm-workspace, turbo.json, tsconfig, biome, .dockerignore, extended .gitignore), `apps/api`
+  (Hono + `/health` + pino logger + requestLogger + config), `apps/web` (Next App Router, dual-context
+  `api.ts`, Tailwind v4 baseline, `force-dynamic` `/health` page), `packages/shared` (placeholder
+  export), and `scripts/db-{start,stop,reset}.sh`. Check loop green: lint ✓ typecheck ✓ test:fast (api
+  2 tests) ✓ build ✓. Live runtime verified end-to-end: api `/health`→`{"status":"ok"}`, web home
+  rendered `API health: ok`. **All M01 exit criteria met.**
+
+## Outcome
+
+Empty-but-green monorepo skeleton, mirroring the sibling home* repos, with a verified web→api health
+hop. Deviations from the plan: (1) DB name `homejobboard_dev` (matches the `_dev` house convention,
+not the bare `homejobboard` in the plan); (2) `--passWithNoTests` added to `shared`/`web` test scripts
+since they have no tests yet in M01 (api keeps its real test); (3) lean web deps — Next + React +
+Tailwind v4 only, deferring shadcn/radix/lucide to M05. No blockers for M02.
+
+Closed: 2026-06-08
+

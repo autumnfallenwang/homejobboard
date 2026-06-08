@@ -1,0 +1,17 @@
+node_modules
+**/node_modules
+.next
+**/.next
+dist
+**/dist
+.turbo
+**/.turbo
+.git
+.github
+poc
+coverage
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store

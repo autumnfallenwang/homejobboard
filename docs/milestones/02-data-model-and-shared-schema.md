@@ -1,6 +1,6 @@
 ---
 name: 02-data-model-and-shared-schema
-status: planned
+status: active
 created: 2026-06-08
 ---
 
