@@ -31,10 +31,12 @@ export async function seedSources(db: Database): Promise<void> {
 // CLI entry: `tsx --env-file=.env src/db/seed.ts`
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const { db, closeDb } = await import("./index.js");
+  const { seedDefaultSettings } = await import("../services/settings.js");
   await seedSources(db);
+  await seedDefaultSettings(db);
   log.info(
-    { event: "seed.sources.done", count: STARTER_SOURCES.length },
-    "starter sources seeded (existing rows untouched)",
+    { event: "seed.done", sources: STARTER_SOURCES.length },
+    "starter sources + default settings seeded (existing rows untouched)",
   );
   await closeDb();
   process.exit(0);

@@ -55,6 +55,13 @@ export const jobs = pgTable(
   ],
 );
 
+// Key/value app settings (fitness profile, LLM model choices, batch sizes).
+export const settings = pgTable("settings", {
+  key: text().primaryKey(),
+  value: text().notNull(),
+  updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+});
+
 // LLM fitness score, 1:1 with a job (unique jobId, cascade on delete).
 export const jobScores = pgTable("job_scores", {
   id: uuid().primaryKey().defaultRandom(),

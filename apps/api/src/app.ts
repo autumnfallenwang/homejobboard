@@ -4,6 +4,7 @@ import { config } from "./config.js";
 import { requestLogger } from "./middleware/logger.js";
 import { jobsApp } from "./routes/jobs.js";
 import { pollApp } from "./routes/poll.js";
+import { scoreApp } from "./routes/score.js";
 import { sourcesApp } from "./routes/sources.js";
 
 /** Build the Hono app. */
@@ -29,6 +30,7 @@ export function createApp() {
   app.route("/jobs", jobsApp);
   app.route("/sources", sourcesApp);
   app.route("/poll", pollApp);
+  app.route("/score", scoreApp);
 
   return app;
 }

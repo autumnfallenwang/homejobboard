@@ -10,8 +10,8 @@ export const config = {
   databaseUrl: process.env.DATABASE_URL,
   /** HTTP server port. */
   apiPort: Number(process.env.API_PORT ?? 3001),
-  /** LLM gateway base URL (cluster llmgw). Consumed from M04. */
-  llmgwUrl: process.env.LLMGW_URL ?? "http://llmgw.arch.local",
+  /** LLM gateway base URL (cluster llmgw, OpenAI-compatible). `/v1` is appended by the client. */
+  llmGatewayUrl: process.env.LLM_GATEWAY_URL ?? "http://llmgw.arch.local",
   /** Cron expression for the auto-poll scheduler (default: every 30 minutes). */
   pollCron: process.env.POLL_CRON ?? "*/30 * * * *",
   /** Whether the scheduler arms on boot (off under tests / when set to "0"|"false"). */

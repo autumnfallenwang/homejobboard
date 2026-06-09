@@ -1,10 +1,14 @@
+import { composite, freshness } from "@homejobboard/shared";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { Database } from "./index.js";
-import { jobs, sources } from "./schema.js";
+import { jobScores, jobs, sources } from "./schema.js";
 
 export type NewJob = typeof jobs.$inferInsert;
 export type JobRow = typeof jobs.$inferSelect;
 export type SourceRow = typeof sources.$inferSelect;
+export type NewScore = typeof jobScores.$inferInsert;
+export type ScoreRow = typeof jobScores.$inferSelect;
+export type RankedJob = JobRow & { score: ScoreRow; rank: number };
 
 /** Bulk-insert jobs, skipping rows whose (source, sourceJobId) already exists.
  *  Returns the rows actually inserted ("new" jobs). */
@@ -102,4 +106,53 @@ export async function updateSource(
 
 export async function setLastPolled(db: Database, slug: string, at: Date): Promise<void> {
   await db.update(sources).set({ lastPolledAt: at }).where(eq(sources.slug, slug));
+}
+
+// --- Scoring & ranking ---
+
+/** Non-duplicate jobs with no score yet (the scoring cost guard). Oldest-fetched first. */
+export function unscoredJobs(db: Database, limit: number): Promise<JobRow[]> {
+  return db
+    .select()
+    .from(jobs)
+    .leftJoin(jobScores, eq(jobScores.jobId, jobs.id))
+    .where(and(isNull(jobs.duplicateOfId), isNull(jobScores.id)))
+    .orderBy(jobs.fetchedAt)
+    .limit(limit)
+    .then((rows) => rows.map((r) => r.jobs));
+}
+
+export async function insertScore(db: Database, row: NewScore): Promise<void> {
+  await db.insert(jobScores).values(row).onConflictDoNothing({ target: jobScores.jobId });
+}
+
+export async function getScore(db: Database, jobId: string): Promise<ScoreRow | undefined> {
+  const [row] = await db.select().from(jobScores).where(eq(jobScores.jobId, jobId)).limit(1);
+  return row;
+}
+
+/**
+ * Scored, non-duplicate jobs ranked by a LIVE composite (fitness × freshness-now),
+ * recomputed at query time so ranking never goes stale. Newest scores are joined in.
+ */
+export async function listRankedJobs(
+  db: Database,
+  opts: { limit?: number; offset?: number } = {},
+): Promise<RankedJob[]> {
+  const { limit = 50, offset = 0 } = opts;
+  const rows = await db
+    .select({ job: jobs, score: jobScores })
+    .from(jobs)
+    .innerJoin(jobScores, eq(jobScores.jobId, jobs.id))
+    .where(isNull(jobs.duplicateOfId));
+
+  const now = new Date();
+  return rows
+    .map((r) => ({
+      ...r.job,
+      score: r.score,
+      rank: composite(r.score.fitness, freshness(r.job.postedAt?.toISOString() ?? null, now)),
+    }))
+    .sort((a, b) => b.rank - a.rank)
+    .slice(offset, offset + limit);
 }

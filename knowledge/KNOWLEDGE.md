@@ -47,3 +47,4 @@ The skill picks a slug, writes the file with the right frontmatter, and updates 
 - [ats-company-slug-sourcing](ats-company-slug-sourcing.md) — `project` — ATS sources are per-company with no enumerate-all endpoint; we must seed/grow a company-token list.
 - [antibot-blocked-boards](antibot-blocked-boards.md) — `reference` — which boards are walled/gated/dropped and why, so we don't re-research them.
 - [fast-xml-parser-entity-limit](fast-xml-parser-entity-limit.md) — `reference` — big RSS feeds hit fast-xml-parser's entity limit; fix with `processEntities:false` + own decode.
+- [llmgw-gateway](llmgw-gateway.md) — `reference` — the cluster LLM gateway is OpenAI-compatible at `${LLM_GATEWAY_URL}/v1`; models incl. claude-haiku-4-5.

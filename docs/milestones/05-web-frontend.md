@@ -1,6 +1,6 @@
 ---
 name: 05-web-frontend
-status: planned
+status: active
 created: 2026-06-08
 ---
 
