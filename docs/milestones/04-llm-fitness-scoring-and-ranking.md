@@ -1,6 +1,6 @@
 ---
 name: 04-llm-fitness-scoring-and-ranking
-status: planned
+status: active
 created: 2026-06-08
 ---
 

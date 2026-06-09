@@ -13,8 +13,14 @@ const STARTER_SOURCES: Array<{
 }> = [
   { slug: "remoteok", kind: "remoteok", params: {} },
   { slug: "remotive", kind: "remotive", params: {} },
+  { slug: "wwr", kind: "wwr", params: {} },
   { slug: "greenhouse:stripe", kind: "greenhouse", params: { companyToken: "stripe" } },
   { slug: "lever:spotify", kind: "lever", params: { companyToken: "spotify" } },
+  {
+    slug: "linkedin",
+    kind: "linkedin",
+    params: { keywords: "software engineer", location: "United States", tpr: "r86400" },
+  },
 ];
 
 /** Idempotent: existing slugs are left untouched. */

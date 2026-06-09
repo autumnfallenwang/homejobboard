@@ -94,4 +94,25 @@ describe.skipIf(!url)("runPoll integration (live DB)", () => {
     const all = await listJobs(db, { includeDuplicates: true });
     expect(all).toHaveLength(2);
   });
+
+  it("runs Stage-2 enrichment for rows missing a description", async () => {
+    // Summary has no description; the adapter's fetchDetail supplies one (LinkedIn shape).
+    const stage2: Source = {
+      id: "fake-li",
+      async search() {
+        return [summary({ source: "fake-li", sourceJobId: "li1", description: null })];
+      },
+      async fetchDetail() {
+        return { description: "Full posting body.", seniority: "Mid-Senior level" };
+      },
+    };
+
+    const res = await runPoll(db, { entries: [{ slug: "fake-li", source: stage2 }] });
+    expect(res.inserted).toBe(1);
+    expect(res.perSource[0]?.enriched).toBe(1);
+
+    const [row] = await listJobs(db, {});
+    expect(row?.description).toBe("Full posting body.");
+    expect(row?.seniority).toBe("Mid-Senior level");
+  });
 });

@@ -63,6 +63,30 @@ export async function setDuplicateOf(db: Database, id: string, canonicalId: stri
   await db.update(jobs).set({ duplicateOfId: canonicalId }).where(eq(jobs.id, id));
 }
 
+/** Apply a Stage-2 JobDetail to a stored row (only the fields the detail provides). */
+export async function updateJobDetail(
+  db: Database,
+  id: string,
+  detail: {
+    description?: string | null;
+    employmentType?: string | null;
+    seniority?: string | null;
+    salaryMin?: number | null;
+    salaryMax?: number | null;
+    tags?: string[] | null;
+  },
+): Promise<void> {
+  const patch: Partial<NewJob> = {};
+  if (detail.description != null) patch.description = detail.description;
+  if (detail.employmentType != null) patch.employmentType = detail.employmentType;
+  if (detail.seniority != null) patch.seniority = detail.seniority;
+  if (detail.salaryMin != null) patch.salaryMin = detail.salaryMin;
+  if (detail.salaryMax != null) patch.salaryMax = detail.salaryMax;
+  if (detail.tags != null) patch.tags = detail.tags;
+  if (Object.keys(patch).length === 0) return;
+  await db.update(jobs).set(patch).where(eq(jobs.id, id));
+}
+
 export function listSources(db: Database): Promise<SourceRow[]> {
   return db.select().from(sources).orderBy(sources.slug);
 }

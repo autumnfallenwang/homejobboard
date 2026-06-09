@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>We Work Remotely: Remote Jobs</title>
+    <link>https://weworkremotely.com/</link>
+    <description>The latest remote jobs.</description>
+    <item>
+      <title>Yei Finance: Product Manager</title>
+      <region>Anywhere in the World</region>
+      <country></country>
+      <state></state>
+      <skills></skills>
+      <category>Management and Finance</category>
+      <type>Full-Time</type>
+      <description>&lt;p&gt;&lt;strong&gt;Headquarters:&lt;/strong&gt; Spain&lt;/p&gt;&lt;p&gt;Build the Clovis product.&lt;/p&gt;</description>
+      <pubDate>Mon, 08 Jun 2026 20:31:06 +0000</pubDate>
+      <expires_at>Wed, 08 Jul 2026 20:31:06 +0000</expires_at>
+      <guid>https://weworkremotely.com/remote-jobs/yei-finance-product-manager</guid>
+      <link>https://weworkremotely.com/remote-jobs/yei-finance-product-manager</link>
+    </item>
+    <item>
+      <title>Acme: Senior TypeScript Engineer</title>
+      <region>Anywhere in the World</region>
+      <country></country>
+      <state></state>
+      <skills></skills>
+      <category>Programming</category>
+      <type>Contract</type>
+      <description>&lt;p&gt;Build platform services in TypeScript.&lt;/p&gt;</description>
+      <pubDate>Sun, 07 Jun 2026 10:00:00 +0000</pubDate>
+      <expires_at>Tue, 07 Jul 2026 10:00:00 +0000</expires_at>
+      <guid>https://weworkremotely.com/remote-jobs/acme-senior-typescript-engineer</guid>
+      <link>https://weworkremotely.com/remote-jobs/acme-senior-typescript-engineer</link>
+    </item>
+  </channel>
+</rss>

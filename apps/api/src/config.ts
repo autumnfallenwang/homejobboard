@@ -12,6 +12,12 @@ export const config = {
   apiPort: Number(process.env.API_PORT ?? 3001),
   /** LLM gateway base URL (cluster llmgw). Consumed from M04. */
   llmgwUrl: process.env.LLMGW_URL ?? "http://llmgw.arch.local",
+  /** Cron expression for the auto-poll scheduler (default: every 30 minutes). */
+  pollCron: process.env.POLL_CRON ?? "*/30 * * * *",
+  /** Whether the scheduler arms on boot (off under tests / when set to "0"|"false"). */
+  schedulerEnabled: !["0", "false"].includes(
+    (process.env.SCHEDULER_ENABLED ?? "true").toLowerCase(),
+  ),
   /** Log verbosity. */
   logLevel: process.env.LOG_LEVEL ?? "info",
   /** Origins allowed by CORS. */

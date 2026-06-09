@@ -3,18 +3,27 @@ import type { Database } from "../db/index.js";
 import {
   dedupRows,
   insertJobs,
+  type JobRow,
   type NewJob,
   setDuplicateOf,
   setLastPolled,
+  updateJobDetail,
 } from "../db/queries.js";
 import { log } from "../lib/logger.js";
 import { buildSource, enabledSourceConfigs } from "../sources/registry.js";
 import { markDuplicates } from "./dedup.js";
 
+// Stage-2 enrichment politeness bounds (per source, per poll).
+const MAX_DETAIL_PER_SOURCE = 25;
+const DETAIL_DELAY_MS = 300;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 export interface PollSourceResult {
   slug: string;
   fetched: number;
   inserted: number;
+  enriched: number;
   error?: string;
 }
 export interface PollSummary {
@@ -82,18 +91,61 @@ export async function runPoll(
       const rows = summaries.map(toJobRow);
       const newRows = await insertJobs(db, rows);
       inserted += newRows.length;
-      perSource.push({ slug: entry.slug, fetched: summaries.length, inserted: newRows.length });
+      const enriched = await enrichNewRows(db, source, summaries, newRows);
+      perSource.push({
+        slug: entry.slug,
+        fetched: summaries.length,
+        inserted: newRows.length,
+        enriched,
+      });
       await setLastPolled(db, entry.slug, now);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       log.error({ event: "poll.source.failed", slug: entry.slug, err: msg }, "source poll failed");
-      perSource.push({ slug: entry.slug, fetched: 0, inserted: 0, error: msg });
+      perSource.push({ slug: entry.slug, fetched: 0, inserted: 0, enriched: 0, error: msg });
     }
   }
 
   const duplicates = await applyDedup(db);
   log.info({ event: "poll.done", inserted, duplicates }, "poll complete");
   return { perSource, inserted, duplicates };
+}
+
+/**
+ * Stage-2 enrichment: for newly-inserted rows missing a description, call the
+ * source's `fetchDetail` and persist the result. Clean sources (description already
+ * present) are skipped entirely. Bounded + throttled to stay polite; per-row errors
+ * are isolated. Returns how many rows were enriched.
+ */
+async function enrichNewRows(
+  db: Database,
+  source: Source,
+  summaries: JobSummary[],
+  newRows: JobRow[],
+): Promise<number> {
+  const needsDetail = newRows.filter((r) => r.description == null);
+  if (needsDetail.length === 0) return 0;
+
+  const byJobId = new Map(summaries.map((s) => [s.sourceJobId, s]));
+  let enriched = 0;
+  for (const row of needsDetail) {
+    if (enriched >= MAX_DETAIL_PER_SOURCE) break;
+    const summary = byJobId.get(row.sourceJobId);
+    if (!summary) continue;
+    try {
+      const detail = await source.fetchDetail(summary);
+      await updateJobDetail(db, row.id, detail);
+      enriched++;
+      await sleep(DETAIL_DELAY_MS);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      log.warn(
+        { event: "poll.detail.failed", jobId: row.sourceJobId, err: msg },
+        "detail fetch failed",
+      );
+    }
+  }
+  return enriched;
 }
 
 /** Cross-source dedup pass over the whole table. Returns the number of rows marked. */

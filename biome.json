@@ -16,6 +16,7 @@
       "!**/drizzle",
       "!**/*.gen.ts",
       "!**/components/ui",
+      "!**/__fixtures__",
       "!**/.devkit",
       "!poc",
       "!**/settings.local.json"

@@ -4,8 +4,10 @@ import type { Database } from "../db/index.js";
 import { sources as sourcesTable } from "../db/schema.js";
 import { greenhouseSource } from "./greenhouse.js";
 import { leverSource } from "./lever.js";
+import { linkedinSource } from "./linkedin.js";
 import { remoteOkSource } from "./remoteok.js";
 import { remotiveSource } from "./remotive.js";
+import { wwrSource } from "./wwr.js";
 
 /** Instantiate the adapter for a source config. Throws on an unimplemented kind. */
 export function buildSource(config: SourceConfig): Source {
@@ -18,6 +20,10 @@ export function buildSource(config: SourceConfig): Source {
       return remoteOkSource(config);
     case "remotive":
       return remotiveSource(config);
+    case "wwr":
+      return wwrSource(config);
+    case "linkedin":
+      return linkedinSource(config);
     default:
       throw new Error(`No adapter implemented for source kind "${config.kind}" (${config.slug})`);
   }

@@ -1,6 +1,6 @@
 ---
 name: 03-source-adapters-and-ingestion
-status: active
+status: done
 created: 2026-06-08
 ---
 
@@ -53,8 +53,8 @@ via `GET /jobs?...` returning stored, deduped jobs newest-first.
 - [x] `POST /poll` ingests from ≥3 Tier-1 sources (4: RemoteOK, Remotive, Greenhouse, Lever) into the DB — **verified live: 764 jobs**
 - [x] Re-polling does **not** create duplicates (verified: 2nd poll inserted 0); cross-source `duplicateOfId` collapse verified in the ingest integration test
 - [x] `postedAt` is correctly the original-post time for each adapter (per-adapter parse unit tests on POC fixtures)
-- [ ] LinkedIn adapter ports the POC: list + detail, just-listed via `f_TPR` — **deferred to part 2**
-- [ ] Scheduler runs `runPoll()` on the interval, per-source failures isolated — **deferred to part 2** (error isolation itself is done; cron not yet)
+- [x] LinkedIn adapter ports the POC: list + detail, just-listed via `f_TPR` — **done** (two-stage: list parse + `fetchDetail` HTML; verified live, 10 jobs enriched with full descriptions)
+- [x] Scheduler runs `runPoll()` on the interval, per-source failures isolated — **done** (node-cron, armed on boot; per-source + per-detail errors isolated)
 - [x] `pnpm lint`, `pnpm test:fast`, `pnpm build` green
 
 ## Decisions (locked)
@@ -87,3 +87,23 @@ via `GET /jobs?...` returning stored, deduped jobs newest-first.
 - **Part 2 remaining (M03 stays open):** We Work Remotely + HN adapters, the **LinkedIn guest adapter**
   (real Stage-2 `fetchDetail` + HTML parse), the **node-cron scheduler**, and Tier-2 key adapters
   (Adzuna/USAJobs). Also swapped the seed's Lever example `netflix`→`spotify` (netflix isn't on Lever).
+- 2026-06-08 (part 2): Completed M03. Added the **WWR** RSS adapter (`fast-xml-parser`, processEntities
+  off + own entity decode to dodge the expansion limit) and the **LinkedIn guest adapter** — the only
+  two-stage source (list HTML → `fetchDetail` detail HTML, ported from the POC). Added the **Stage-2
+  enrichment pass** to `runPoll` (new rows missing a description get `fetchDetail` → `updateJobDetail`,
+  bounded to ≤25/source + 300ms throttle, errors isolated), a shared `sources/html.ts` decode util, and
+  the **node-cron scheduler** (`services/scheduler.ts`, armed on boot, `POLL_CRON` default `*/30`).
+  Seeded `wwr` + `linkedin` sources. Check loop green: lint ✓ typecheck ✓ test:fast (api 20) ✓; live
+  integration (incl. enrichment) ✓; build ✓. **Live smoke:** WWR 99 jobs, LinkedIn 10 jobs all enriched
+  with full descriptions + seniority via Stage-2; scheduler armed.
+
+## Outcome
+
+The ingestion layer is complete: 6 source kinds (4 clean Tier-1 + WWR + LinkedIn) feed `runPoll`
+(normalize → dedup → store → Stage-2 enrich), reachable via `POST /poll` and the read routes, and
+auto-run by the node-cron scheduler. **HN and Tier-2 (Adzuna/USAJobs) were intentionally not built**
+— HN needs LLM extraction (no structured title/company; revisit in/after M04), and Tier-2 needs free
+keys (standing Q#3). The normalized jobs now have descriptions for every source, which is exactly what
+M04's LLM fitness scoring consumes next.
+
+Closed: 2026-06-08
