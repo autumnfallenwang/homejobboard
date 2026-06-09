@@ -1,6 +1,6 @@
 ---
 name: 03-source-adapters-and-ingestion
-status: planned
+status: active
 created: 2026-06-08
 ---
 

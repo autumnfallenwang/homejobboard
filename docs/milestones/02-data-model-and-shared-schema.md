@@ -1,6 +1,6 @@
 ---
 name: 02-data-model-and-shared-schema
-status: active
+status: done
 created: 2026-06-08
 ---
 
@@ -44,10 +44,11 @@ milestone builds on. Realizes ADR [0003](../adr/0003-normalized-job-model-and-so
 
 ## Exit criteria
 
-- [ ] `drizzle-kit push` applies the schema to the local DB with no error; `seed.ts` is idempotent
-- [ ] `@homejobboard/shared` types import cleanly in both `apps/api` and `apps/web`
-- [ ] Unit tests: each Zod schema parses a representative fixture (one per source kind) and rejects bad input
-- [ ] `pnpm lint`, `pnpm test:fast`, `pnpm build` green
+- [x] `db:generate` + `db:migrate` apply the schema to the local DB with no error; `seed.ts` is
+      idempotent (verified: 2 runs → 4 source rows). *(House pattern generate+migrate, not `push`.)*
+- [x] `@homejobboard/shared` types import cleanly in both `apps/api` and `apps/web` (build green)
+- [x] Unit tests: Zod schemas + `dedupKey()` parse representative fixtures and reject bad input
+- [x] `pnpm lint`, `pnpm test:fast`, `pnpm build` green (+ live integration test: CRUD/unique/cascade)
 
 ## Decisions (locked)
 
@@ -66,4 +67,23 @@ milestone builds on. Realizes ADR [0003](../adr/0003-normalized-job-model-and-so
 
 ## Progress
 
-- _not started_
+- 2026-06-08: Defined the data contract — `packages/shared` now exports `Job`/`JobSummary`/`JobDetail`,
+  `JobFilters`, the `Source` interface + `SourceConfig`, `JobScore`, and a pure `dedupKey()` helper
+  (`job.ts`/`filters.ts`/`source.ts`/`score.ts` + barrel). `apps/api` got the Drizzle layer: `sources`
+  / `jobs` / `job_scores` tables (`db/schema.ts`), the postgres-js client (`db/index.ts`,
+  snake_case casing + `closeDb()`), `drizzle.config.ts`, an idempotent `seed.ts`, and the generated
+  `drizzle/0000_windy_morbius.sql`. Verified live against Docker Postgres: generate → migrate → seed×2
+  (4 rows, idempotent) → integration test (CRUD + unique(source,sourceJobId) + score cascade) all pass.
+  Check loop green: lint ✓ typecheck ✓ test:fast (shared 7, api 5) ✓ build ✓. **All M02 exit criteria met.**
+
+## Outcome
+
+The normalized `Job` model, `Source` adapter interface, and Drizzle tables are in place — the contract
+M03 builds adapters against. Deviations from the plan: (1) **generate+migrate** (committing
+`drizzle/`), not `drizzle-kit push` — matches the sibling repos and keeps migrations reviewable;
+(2) `tags`/`reasons` stored as `text[]` (not jsonb). `JobFilters` is a sensible v1 (standing Q#1) and
+the seeded ATS tokens (`greenhouse:stripe`, `lever:netflix`) are examples pending the real curated
+list (standing Q#2). No blockers for M03.
+
+Closed: 2026-06-08
+
