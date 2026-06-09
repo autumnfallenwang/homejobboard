@@ -24,6 +24,7 @@ const storedJob = {
   fetchedAt: "2026-06-08T12:01:00.000Z",
   dedupKey: "stripe|software engineer|san francisco ca",
   duplicateOfId: null,
+  status: "new",
 };
 
 describe("jobSchema", () => {

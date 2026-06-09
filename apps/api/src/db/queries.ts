@@ -1,4 +1,4 @@
-import { composite, freshness } from "@homejobboard/shared";
+import { composite, freshness, type JobStatus } from "@homejobboard/shared";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { Database } from "./index.js";
 import { jobScores, jobs, sources } from "./schema.js";
@@ -9,6 +9,7 @@ export type SourceRow = typeof sources.$inferSelect;
 export type NewScore = typeof jobScores.$inferInsert;
 export type ScoreRow = typeof jobScores.$inferSelect;
 export type RankedJob = JobRow & { score: ScoreRow; rank: number };
+export type FeedJob = JobRow & { score: ScoreRow | null; rank: number };
 
 /** Bulk-insert jobs, skipping rows whose (source, sourceJobId) already exists.
  *  Returns the rows actually inserted ("new" jobs). */
@@ -155,4 +156,50 @@ export async function listRankedJobs(
     }))
     .sort((a, b) => b.rank - a.rank)
     .slice(offset, offset + limit);
+}
+
+/**
+ * The web feed: non-duplicate jobs with their score LEFT-joined (nullable). `sort=rank`
+ * keeps only scored jobs ordered by live composite; `sort=recent` keeps all, newest-first.
+ * Filters by `status` (default 'new'). Computed/ordered in JS so ranking is always fresh.
+ */
+export async function listFeed(
+  db: Database,
+  opts: { sort?: "recent" | "rank"; status?: JobStatus; limit?: number; offset?: number } = {},
+): Promise<FeedJob[]> {
+  const { sort = "recent", status = "new", limit = 50, offset = 0 } = opts;
+  const rows = await db
+    .select({ job: jobs, score: jobScores })
+    .from(jobs)
+    .leftJoin(jobScores, eq(jobScores.jobId, jobs.id))
+    .where(and(isNull(jobs.duplicateOfId), eq(jobs.status, status)));
+
+  const now = new Date();
+  let feed: FeedJob[] = rows.map((r) => ({
+    ...r.job,
+    score: r.score,
+    rank: r.score
+      ? composite(r.score.fitness, freshness(r.job.postedAt?.toISOString() ?? null, now))
+      : 0,
+  }));
+
+  if (sort === "rank") {
+    feed = feed.filter((j) => j.score != null).sort((a, b) => b.rank - a.rank);
+  } else {
+    feed.sort((a, b) => {
+      const ta = a.postedAt?.getTime() ?? 0;
+      const tb = b.postedAt?.getTime() ?? 0;
+      return tb - ta || b.fetchedAt.getTime() - a.fetchedAt.getTime();
+    });
+  }
+  return feed.slice(offset, offset + limit);
+}
+
+export async function setJobStatus(
+  db: Database,
+  id: string,
+  status: JobStatus,
+): Promise<JobRow | undefined> {
+  const [row] = await db.update(jobs).set({ status }).where(eq(jobs.id, id)).returning();
+  return row;
 }

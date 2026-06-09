@@ -1,6 +1,6 @@
 ---
 name: 05-web-frontend
-status: active
+status: done
 created: 2026-06-08
 ---
 
@@ -30,11 +30,11 @@ enable/disable sources, opens a job's detail (description + fitness + reasons), 
 
 ## Exit criteria
 
-- [ ] Feed shows API-ranked jobs with fitness + freshness; refresh reflects a new poll
-- [ ] Filter + source changes persist and re-shape the feed
-- [ ] Detail view renders full description + score + reasons + working apply link
-- [ ] Send-out action works for at least the "open applyUrl + mark actioned" path
-- [ ] `pnpm lint`, `pnpm test:fast`, `pnpm build` green
+- [x] Feed shows API jobs with fitness scores (Newest + Best-fit ranked tabs); Refresh re-polls + re-scores
+- [x] Source toggles + status tabs persist and re-shape the feed (filters reinterpreted as source toggles + status, since `JobFilters` aren't wired into ingestion yet)
+- [x] Detail view renders the description (safe plain-text), fitness score + reasons, and an Apply link
+- [x] Send-out works: Apply opens the URL **and** marks `applied`; Dismiss/Reset too; actioned jobs leave the `new` feed (verified live)
+- [x] `pnpm lint`, `pnpm test:fast` (api 26, web 8, shared 10), `pnpm build` green
 
 ## Decisions (locked)
 
@@ -49,4 +49,27 @@ enable/disable sources, opens a job's detail (description + fitness + reasons), 
 
 ## Progress
 
-- _not started_
+- 2026-06-08: Built the web UI. Backend: added a `status` column to `jobs` (migration `0002`,
+  `new|applied|dismissed`) + `jobStatusSchema`/`status` in shared, `listFeed`/`setJobStatus` queries,
+  `PATCH /jobs/:id`, an extended `GET /jobs` (sort/status, score attached), and a `settings` route
+  (GET/PUT). Frontend (`apps/web`): typed `lib/api.ts` (request wrapper + `ApiClientError`),
+  `lib/format.ts` (`formatRelativeTime`/`scoreColor`/`plainText`), `lib/utils.ts` (`cn`), an oklch
+  theme, a header nav, the **feed** page (Newest/Best-fit tabs, status tabs, `RefreshButton`,
+  `JobCard`+`ScoreBadge`), the **job detail** page (score + reasons + plain-text description +
+  `ActionBar`), and the **settings** page (`ProfileEditor` + `SourceToggles` + poll/score). Deps:
+  lucide-react, clsx, tailwind-merge. Check loop green (lint ✓ typecheck ✓ test:fast api 26/web 8/
+  shared 10 ✓; integration 33 ✓; build ✓). **Live smoke:** feed renders ranked jobs with real
+  fitness + reasons; Apply → `applied` removes the job from the `new` feed; settings shows the profile.
+  (Debug note: a stale M01 `next start` was holding port 3000 and serving the old build — killed it.)
+
+## Outcome
+
+The owner now has a usable UI: a ranked just-listed feed with fitness scores, a detail view with the
+LLM's reasons + apply link, send-out with applied/dismissed triage, and a settings page to edit the
+fitness profile + toggle sources + trigger poll/score. The full product loop works end to end. Two
+deliberate simplifications: descriptions render as **safe plain text** (no `dangerouslySetInnerHTML`),
+and "filters" are **source toggles + status tabs** (server-side `JobFilters` aren't wired into
+ingestion yet). Next: M06 deploy to k3s. The user should also set their real `fitness_profile` via the
+settings page for meaningful scores.
+
+Closed: 2026-06-08

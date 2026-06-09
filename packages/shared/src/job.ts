@@ -6,6 +6,10 @@ import { z } from "zod";
 export const workplaceTypeSchema = z.enum(["remote", "hybrid", "onsite"]);
 export type WorkplaceType = z.infer<typeof workplaceTypeSchema>;
 
+// Triage status set from the UI. `new` jobs show in the feed; applied/dismissed leave it.
+export const jobStatusSchema = z.enum(["new", "applied", "dismissed"]);
+export type JobStatus = z.infer<typeof jobStatusSchema>;
+
 // Stage-1 output of a source adapter's `search()` — normalized listing fields.
 // Clean sources (ATS, RemoteOK, …) also fill `description` here, making their
 // `fetchDetail()` a no-op.
@@ -61,6 +65,7 @@ export const jobSchema = z.object({
   fetchedAt: z.string(),
   dedupKey: z.string(),
   duplicateOfId: z.string().uuid().nullable(),
+  status: jobStatusSchema,
 });
 export type Job = z.infer<typeof jobSchema>;
 

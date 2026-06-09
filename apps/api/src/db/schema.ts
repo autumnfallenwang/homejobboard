@@ -47,6 +47,8 @@ export const jobs = pgTable(
     fetchedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     dedupKey: text().notNull(),
     duplicateOfId: uuid(),
+    // Triage status: 'new' | 'applied' | 'dismissed' (app-level enum).
+    status: text().notNull().default("new"),
   },
   (table) => [
     unique("jobs_source_source_job_id_unique").on(table.source, table.sourceJobId),
