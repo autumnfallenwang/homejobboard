@@ -2,6 +2,9 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { config } from "./config.js";
 import { requestLogger } from "./middleware/logger.js";
+import { jobsApp } from "./routes/jobs.js";
+import { pollApp } from "./routes/poll.js";
+import { sourcesApp } from "./routes/sources.js";
 
 /** Build the Hono app. */
 export function createApp() {
@@ -22,7 +25,10 @@ export function createApp() {
   // Health check
   app.get("/health", (c) => c.json({ status: "ok" }));
 
-  // Resource routes land from M03 (jobs, sources, poll).
+  // Resource routes
+  app.route("/jobs", jobsApp);
+  app.route("/sources", sourcesApp);
+  app.route("/poll", pollApp);
 
   return app;
 }

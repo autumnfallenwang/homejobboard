@@ -1,0 +1,31 @@
+{
+  "meta": { "total": 2 },
+  "jobs": [
+    {
+      "id": 7532733,
+      "internal_job_id": 8001,
+      "title": "Account Executive, AI Sales",
+      "company_name": "Stripe",
+      "location": { "name": "San Francisco, CA" },
+      "absolute_url": "https://stripe.com/jobs/search?gh_jid=7532733",
+      "first_published": "2026-06-01T09:00:00-04:00",
+      "updated_at": "2026-06-02T08:57:25-04:00",
+      "content": "&lt;p&gt;Sell AI products.&lt;/p&gt;",
+      "departments": [{ "name": "Sales" }],
+      "offices": [{ "name": "San Francisco" }]
+    },
+    {
+      "id": 7964697,
+      "internal_job_id": 8002,
+      "title": "Software Engineer, Payments",
+      "company_name": "Stripe",
+      "location": { "name": "Remote" },
+      "absolute_url": "https://stripe.com/jobs/search?gh_jid=7964697",
+      "first_published": "2026-06-05T12:00:00-04:00",
+      "updated_at": "2026-06-05T15:44:04-04:00",
+      "content": "&lt;p&gt;Build payments infra.&lt;/p&gt;",
+      "departments": [{ "name": "Engineering" }],
+      "offices": [{ "name": "Remote" }]
+    }
+  ]
+}

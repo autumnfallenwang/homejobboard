@@ -1,0 +1,34 @@
+[
+  {
+    "id": "88499546-e9f7-4403-87a5-240050bd7c5b",
+    "text": "Accounts Payable Analyst",
+    "categories": {
+      "commitment": "Permanent",
+      "department": "Finance",
+      "location": "New York, NY",
+      "team": "Accounting"
+    },
+    "createdAt": 1778529611285,
+    "descriptionPlain": "You'll join the Finance team supporting Procure-to-Pay operations.",
+    "description": "<p>You'll join the Finance team.</p>",
+    "workplaceType": "onsite",
+    "hostedUrl": "https://jobs.lever.co/spotify/88499546-e9f7-4403-87a5-240050bd7c5b",
+    "applyUrl": "https://jobs.lever.co/spotify/88499546-e9f7-4403-87a5-240050bd7c5b/apply"
+  },
+  {
+    "id": "99511660-f0a8-5514-98b6-351161ce8d6c",
+    "text": "Senior TypeScript Engineer",
+    "categories": {
+      "commitment": "Full-time",
+      "department": "Engineering",
+      "location": "Remote",
+      "team": "Platform"
+    },
+    "createdAt": 1778616000000,
+    "descriptionPlain": "Build platform services in TypeScript.",
+    "description": "<p>Build platform services in TypeScript.</p>",
+    "workplaceType": "remote",
+    "hostedUrl": "https://jobs.lever.co/spotify/99511660-f0a8-5514-98b6-351161ce8d6c",
+    "applyUrl": "https://jobs.lever.co/spotify/99511660-f0a8-5514-98b6-351161ce8d6c/apply"
+  }
+]

@@ -50,12 +50,12 @@ via `GET /jobs?...` returning stored, deduped jobs newest-first.
 
 ## Exit criteria
 
-- [ ] `POST /poll` ingests from ≥3 Tier-1 sources (e.g. one ATS + RemoteOK + Remotive) into the DB
-- [ ] Re-polling does **not** create duplicates; a job present on two sources collapses to one (`duplicateOfId` set)
-- [ ] `postedAt` is correctly the original-post time for each adapter (unit tests per adapter on a saved fixture)
-- [ ] LinkedIn adapter ports the POC: list + detail, just-listed via `f_TPR`; tested against a saved HTML fixture
-- [ ] Scheduler runs `runPoll()` on the interval with per-source failures isolated (one bad source doesn't abort the pass)
-- [ ] `pnpm lint`, `pnpm test:fast`, `pnpm build` green
+- [x] `POST /poll` ingests from ≥3 Tier-1 sources (4: RemoteOK, Remotive, Greenhouse, Lever) into the DB — **verified live: 764 jobs**
+- [x] Re-polling does **not** create duplicates (verified: 2nd poll inserted 0); cross-source `duplicateOfId` collapse verified in the ingest integration test
+- [x] `postedAt` is correctly the original-post time for each adapter (per-adapter parse unit tests on POC fixtures)
+- [ ] LinkedIn adapter ports the POC: list + detail, just-listed via `f_TPR` — **deferred to part 2**
+- [ ] Scheduler runs `runPoll()` on the interval, per-source failures isolated — **deferred to part 2** (error isolation itself is done; cron not yet)
+- [x] `pnpm lint`, `pnpm test:fast`, `pnpm build` green
 
 ## Decisions (locked)
 
@@ -75,4 +75,15 @@ via `GET /jobs?...` returning stored, deduped jobs newest-first.
 
 ## Progress
 
-- _not started_
+- 2026-06-08 (part 1): Built the source layer + ingestion pipeline. Added the `Source` registry
+  (`sources/registry.ts`), four Tier-1 adapters (`greenhouse`/`lever`/`remoteok`/`remotive` — each a
+  pure `parse*` + a `fetch→parse` `search()`), a shared `http.ts`, the `runPoll()` pipeline
+  (`services/ingest.ts`: normalize → `dedupKey` → `onConflictDoNothing` insert → cross-source dedup
+  via `services/dedup.ts`), `db/queries.ts`, and routes `GET /jobs`, `GET /jobs/:id`, `GET /sources`,
+  `PATCH /sources/:id`, `POST /poll`. Committed fixtures derived from the POC raw samples. Check loop
+  green: lint ✓ typecheck ✓ test:fast (shared 7, api 13) ✓; live integration tests (idempotency +
+  cross-source dedup) ✓; build ✓. **Live smoke:** `POST /poll` ingested **764 jobs** from all 4
+  sources, 2nd poll inserted 0 (idempotent), source filter + `lastPolledAt` verified.
+- **Part 2 remaining (M03 stays open):** We Work Remotely + HN adapters, the **LinkedIn guest adapter**
+  (real Stage-2 `fetchDetail` + HTML parse), the **node-cron scheduler**, and Tier-2 key adapters
+  (Adzuna/USAJobs). Also swapped the seed's Lever example `netflix`→`spotify` (netflix isn't on Lever).

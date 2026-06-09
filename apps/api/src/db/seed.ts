@@ -14,7 +14,7 @@ const STARTER_SOURCES: Array<{
   { slug: "remoteok", kind: "remoteok", params: {} },
   { slug: "remotive", kind: "remotive", params: {} },
   { slug: "greenhouse:stripe", kind: "greenhouse", params: { companyToken: "stripe" } },
-  { slug: "lever:netflix", kind: "lever", params: { companyToken: "netflix" } },
+  { slug: "lever:spotify", kind: "lever", params: { companyToken: "spotify" } },
 ];
 
 /** Idempotent: existing slugs are left untouched. */

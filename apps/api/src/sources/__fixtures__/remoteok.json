@@ -1,0 +1,35 @@
+[
+  {
+    "last_updated": 1780952717,
+    "legal": "API Terms of Service: Please link back ... and mention Remote OK as a source."
+  },
+  {
+    "id": "1132995",
+    "slug": "remote-medical-claims-processor-i-moda-health-1132995",
+    "company": "Moda Health",
+    "position": "Medical Claims Processor I",
+    "date": "2026-06-07T19:21:11+00:00",
+    "location": "Portland",
+    "tags": ["customer support", "medical", "non tech"],
+    "logo": "",
+    "url": "https://remoteOK.com/remote-jobs/remote-medical-claims-processor-i-moda-health-1132995",
+    "apply_url": "https://remoteOK.com/remote-jobs/remote-medical-claims-processor-i-moda-health-1132995",
+    "salary_min": 0,
+    "salary_max": 0,
+    "description": "<p>Process medical claims.</p>"
+  },
+  {
+    "id": "1132989",
+    "slug": "remote-senior-typescript-engineer-acme-1132989",
+    "company": "Acme",
+    "position": "Senior TypeScript Engineer",
+    "date": "2026-06-07T14:03:38+00:00",
+    "location": "",
+    "tags": ["typescript", "react", "dev"],
+    "url": "https://remoteOK.com/remote-jobs/remote-senior-typescript-engineer-acme-1132989",
+    "apply_url": "https://remoteOK.com/remote-jobs/remote-senior-typescript-engineer-acme-1132989",
+    "salary_min": 120000,
+    "salary_max": 180000,
+    "description": "<p>Build the thing in TypeScript.</p>"
+  }
+]

@@ -1,0 +1,33 @@
+{
+  "0-legal-notice": "Remotive API ...",
+  "job-count": 2,
+  "total-job-count": 2,
+  "jobs": [
+    {
+      "id": 2090945,
+      "url": "https://remotive.com/remote-jobs/all-others/online-data-analyst-canada-french-language-2090945",
+      "title": "Online Data Analyst Canada (French Language)",
+      "company_name": "TELUS Digital",
+      "category": "All others",
+      "tags": ["research", "social media"],
+      "job_type": "part_time",
+      "publication_date": "2026-06-04T21:05:36",
+      "candidate_required_location": "Canada",
+      "salary": "",
+      "description": "<p>Analyze data.</p>"
+    },
+    {
+      "id": 2090946,
+      "url": "https://remotive.com/remote-jobs/software-dev/senior-typescript-engineer-acme-2090946",
+      "title": "Senior TypeScript Engineer",
+      "company_name": "Acme",
+      "category": "Software Development",
+      "tags": ["typescript", "node"],
+      "job_type": "full_time",
+      "publication_date": "2026-06-05T10:00:00",
+      "candidate_required_location": "USA",
+      "salary": "$150k",
+      "description": "<p>Build the thing in TypeScript.</p>"
+    }
+  ]
+}
