@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatRelativeTime, plainText, scoreColor } from "./format.js";
+import {
+  descriptionBlocks,
+  formatRelativeTime,
+  formatSalary,
+  plainText,
+  scoreColor,
+} from "./format.js";
 
 const now = new Date("2026-06-08T12:00:00Z");
 
@@ -13,11 +19,21 @@ describe("formatRelativeTime", () => {
 });
 
 describe("scoreColor", () => {
-  it("maps bands", () => {
-    expect(scoreColor(85)).toContain("emerald");
+  it("maps bands to theme tokens", () => {
+    expect(scoreColor(85)).toBe("text-success");
     expect(scoreColor(65)).toBe("text-foreground");
-    expect(scoreColor(45)).toContain("amber");
+    expect(scoreColor(45)).toBe("text-warn");
     expect(scoreColor(10)).toBe("text-muted");
+  });
+});
+
+describe("formatSalary", () => {
+  it("formats ranges, open ends, and unknowns", () => {
+    expect(formatSalary(120000, 170000)).toBe("$120k–$170k");
+    expect(formatSalary(150000, null)).toBe("$150k+");
+    expect(formatSalary(null, 90000)).toBe("up to $90k");
+    expect(formatSalary(200000, 200000)).toBe("$200k");
+    expect(formatSalary(null, null)).toBe("");
   });
 });
 
@@ -31,5 +47,22 @@ describe("plainText", () => {
 
   it("turns list items into bullets", () => {
     expect(plainText("<ul><li>one</li><li>two</li></ul>")).toContain("• one");
+  });
+});
+
+describe("descriptionBlocks", () => {
+  it("classifies headings, bullets, and paragraphs", () => {
+    const blocks = descriptionBlocks(
+      "<h3>About the Team</h3><p>We build robots for warehouses everywhere.</p><ul><li>Ship code</li></ul>",
+    );
+    expect(blocks).toEqual([
+      { type: "h", text: "About the Team" },
+      { type: "p", text: "We build robots for warehouses everywhere." },
+      { type: "li", text: "Ship code" },
+    ]);
+  });
+
+  it("returns [] for empty input", () => {
+    expect(descriptionBlocks(null)).toEqual([]);
   });
 });

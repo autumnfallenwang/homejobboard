@@ -1,0 +1,41 @@
+{
+  "storyId": 48357725,
+  "hits": [
+    {
+      "objectID": "48451409",
+      "author": "focalvc",
+      "comment_text": "focal vc | Head of Tech &amp; AI | Remote&#x2F;Onsite&#x2F;Hybrid (US) | Includes meaningful carry<p>full description: hiring.focal.vc<p>focal leads inception rounds in exceptional technical founders.",
+      "created_at": "2026-06-08T20:26:13Z",
+      "created_at_i": 1786134373,
+      "parent_id": 48357725,
+      "story_id": 48357725
+    },
+    {
+      "objectID": "48452132",
+      "author": "replier",
+      "comment_text": "Try hiring@l2labs.ai",
+      "created_at": "2026-06-08T21:10:39Z",
+      "created_at_i": 1786137039,
+      "parent_id": 48447525,
+      "story_id": 48357725
+    },
+    {
+      "objectID": "48450001",
+      "author": "acmebot",
+      "comment_text": "Acme Robotics | Senior Backend Engineer | Boston, MA (onsite)<p>We build warehouse robots. Stack: TypeScript, Postgres, k8s.<p>$170k-$210k. Email jobs@acme.example",
+      "created_at": "2026-06-08T15:00:00Z",
+      "created_at_i": 1786114800,
+      "parent_id": 48357725,
+      "story_id": 48357725
+    },
+    {
+      "objectID": "48450002",
+      "author": "chatter",
+      "comment_text": "Is anyone else finding the market rough this month?",
+      "created_at": "2026-06-08T16:00:00Z",
+      "created_at_i": 1786118400,
+      "parent_id": 48357725,
+      "story_id": 48357725
+    }
+  ]
+}

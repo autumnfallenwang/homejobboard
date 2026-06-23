@@ -1,5 +1,5 @@
 import { composite, freshness, type JobStatus } from "@homejobboard/shared";
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, isNull, like, max, or, sql } from "drizzle-orm";
 import type { Database } from "./index.js";
 import { jobScores, jobs, sources } from "./schema.js";
 
@@ -50,15 +50,18 @@ export async function getJob(db: Database, id: string): Promise<JobRow | undefin
   return row;
 }
 
-/** All rows needed for the cross-source dedup pass. */
+/** All rows needed for the cross-source dedup pass (title feeds fuzzy role matching). */
 export function dedupRows(
   db: Database,
-): Promise<Array<{ id: string; source: string; dedupKey: string; fetchedAt: Date }>> {
+): Promise<
+  Array<{ id: string; source: string; dedupKey: string; title: string; fetchedAt: Date }>
+> {
   return db
     .select({
       id: jobs.id,
       source: jobs.source,
       dedupKey: jobs.dedupKey,
+      title: jobs.title,
       fetchedAt: jobs.fetchedAt,
     })
     .from(jobs);
@@ -102,6 +105,29 @@ export async function updateSource(
   patch: { enabled?: boolean; params?: Record<string, unknown> },
 ): Promise<SourceRow | undefined> {
   const [row] = await db.update(sources).set(patch).where(eq(sources.id, id)).returning();
+  return row;
+}
+
+/** Insert a source (e.g. an ATS board added from the UI). Returns undefined on slug conflict. */
+export async function insertSource(
+  db: Database,
+  row: { slug: string; kind: string; enabled?: boolean; params?: Record<string, unknown> },
+): Promise<SourceRow | undefined> {
+  const [inserted] = await db
+    .insert(sources)
+    .values({
+      slug: row.slug,
+      kind: row.kind,
+      enabled: row.enabled ?? true,
+      params: row.params ?? {},
+    })
+    .onConflictDoNothing({ target: sources.slug })
+    .returning();
+  return inserted;
+}
+
+export async function deleteSource(db: Database, id: string): Promise<SourceRow | undefined> {
+  const [row] = await db.delete(sources).where(eq(sources.id, id)).returning();
   return row;
 }
 
@@ -158,21 +184,36 @@ export async function listRankedJobs(
     .slice(offset, offset + limit);
 }
 
+export interface FeedOpts {
+  sort?: "recent" | "rank";
+  status?: JobStatus;
+  /** Case-insensitive substring match on title or company. */
+  q?: string;
+  /** Source slug ("remoteok") or family prefix ("greenhouse" matches "greenhouse:*"). */
+  source?: string;
+  /** Keep only jobs scored at or above this fitness. */
+  minScore?: number;
+  limit?: number;
+  offset?: number;
+}
+
 /**
  * The web feed: non-duplicate jobs with their score LEFT-joined (nullable). `sort=rank`
  * keeps only scored jobs ordered by live composite; `sort=recent` keeps all, newest-first.
- * Filters by `status` (default 'new'). Computed/ordered in JS so ranking is always fresh.
+ * Filters by `status` (default 'new'), plus optional q/source/minScore narrowing.
+ * Computed/ordered in JS so ranking is always fresh.
  */
-export async function listFeed(
-  db: Database,
-  opts: { sort?: "recent" | "rank"; status?: JobStatus; limit?: number; offset?: number } = {},
-): Promise<FeedJob[]> {
-  const { sort = "recent", status = "new", limit = 50, offset = 0 } = opts;
+export async function listFeed(db: Database, opts: FeedOpts = {}): Promise<FeedJob[]> {
+  const { sort = "recent", status = "new", q, source, minScore, limit = 50, offset = 0 } = opts;
+  const conds = [isNull(jobs.duplicateOfId), eq(jobs.status, status)];
+  if (q) conds.push(or(ilike(jobs.title, `%${q}%`), ilike(jobs.company, `%${q}%`))!);
+  if (source) conds.push(or(eq(jobs.source, source), like(jobs.source, `${source}:%`))!);
+
   const rows = await db
     .select({ job: jobs, score: jobScores })
     .from(jobs)
     .leftJoin(jobScores, eq(jobScores.jobId, jobs.id))
-    .where(and(isNull(jobs.duplicateOfId), eq(jobs.status, status)));
+    .where(and(...conds));
 
   const now = new Date();
   let feed: FeedJob[] = rows.map((r) => ({
@@ -182,6 +223,8 @@ export async function listFeed(
       ? composite(r.score.fitness, freshness(r.job.postedAt?.toISOString() ?? null, now))
       : 0,
   }));
+
+  if (minScore != null) feed = feed.filter((j) => j.score != null && j.score.fitness >= minScore);
 
   if (sort === "rank") {
     feed = feed.filter((j) => j.score != null).sort((a, b) => b.rank - a.rank);
@@ -193,6 +236,51 @@ export async function listFeed(
     });
   }
   return feed.slice(offset, offset + limit);
+}
+
+/** Duplicate rows folded into a canonical job — "also seen on" for the detail view. */
+export function listDuplicatesOf(
+  db: Database,
+  canonicalId: string,
+): Promise<Array<{ id: string; source: string; url: string }>> {
+  return db
+    .select({ id: jobs.id, source: jobs.source, url: jobs.url })
+    .from(jobs)
+    .where(eq(jobs.duplicateOfId, canonicalId));
+}
+
+export interface FeedStats {
+  new: number;
+  applied: number;
+  dismissed: number;
+  unscored: number;
+  lastPolledAt: string | null;
+}
+
+/** Header stats: triage counts (non-duplicate), unscored backlog, most recent poll. */
+export async function feedStats(db: Database): Promise<FeedStats> {
+  const byStatus = await db
+    .select({ status: jobs.status, n: count() })
+    .from(jobs)
+    .where(isNull(jobs.duplicateOfId))
+    .groupBy(jobs.status);
+
+  const [unscored] = await db
+    .select({ n: count() })
+    .from(jobs)
+    .leftJoin(jobScores, eq(jobScores.jobId, jobs.id))
+    .where(and(isNull(jobs.duplicateOfId), isNull(jobScores.id)));
+
+  const [poll] = await db.select({ at: max(sources.lastPolledAt) }).from(sources);
+
+  const get = (s: string) => byStatus.find((r) => r.status === s)?.n ?? 0;
+  return {
+    new: get("new"),
+    applied: get("applied"),
+    dismissed: get("dismissed"),
+    unscored: unscored?.n ?? 0,
+    lastPolledAt: poll?.at ? poll.at.toISOString() : null,
+  };
 }
 
 export async function setJobStatus(

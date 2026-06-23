@@ -53,8 +53,8 @@ describe("jobScoreSchema", () => {
 });
 
 describe("jobFiltersSchema", () => {
-  it("defaults keywords to an empty array", () => {
-    expect(jobFiltersSchema.parse({})).toEqual({ keywords: [] });
+  it("defaults keywords and excludeKeywords to empty arrays", () => {
+    expect(jobFiltersSchema.parse({})).toEqual({ keywords: [], excludeKeywords: [] });
   });
 });
 

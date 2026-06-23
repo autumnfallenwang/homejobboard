@@ -1,4 +1,10 @@
-import { dedupKey, type JobSummary, type Source } from "@homejobboard/shared";
+import {
+  dedupKey,
+  type JobFilters,
+  type JobSummary,
+  matchesFilters,
+  type Source,
+} from "@homejobboard/shared";
 import type { Database } from "../db/index.js";
 import {
   dedupRows,
@@ -12,6 +18,7 @@ import {
 import { log } from "../lib/logger.js";
 import { buildSource, enabledSourceConfigs } from "../sources/registry.js";
 import { markDuplicates } from "./dedup.js";
+import { getJobFilters } from "./settings.js";
 
 // Stage-2 enrichment politeness bounds (per source, per poll).
 const MAX_DETAIL_PER_SOURCE = 25;
@@ -22,6 +29,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export interface PollSourceResult {
   slug: string;
   fetched: number;
+  /** Summaries dropped by the pre-ingestion JobFilters pass. */
+  filtered: number;
   inserted: number;
   enriched: number;
   error?: string;
@@ -61,16 +70,24 @@ interface PollEntry {
 }
 
 /**
- * Poll enabled sources, normalize → store new jobs (skip already-seen), then run a
- * cross-source dedup pass. Per-source failures are isolated. `opts.sources` restricts
- * to a subset of slugs. `opts.entries` injects pre-built sources (tests). `now` is
- * injectable for deterministic tests.
+ * Poll enabled sources with the stored `job_filters`: each source's `search(filters)`
+ * applies what it can server-side, then `matchesFilters` drops the rest client-side
+ * before insert (ADR 0003: only new + filter-passing jobs are stored/scored). A
+ * cross-source dedup pass follows. Per-source failures are isolated. `opts.sources`
+ * restricts to a subset of slugs. `opts.entries` injects pre-built sources (tests).
+ * `opts.filters` overrides the stored filters. `now` is injectable for tests.
  */
 export async function runPoll(
   db: Database,
-  opts: { sources?: string[]; entries?: Array<{ slug: string; source: Source }>; now?: Date } = {},
+  opts: {
+    sources?: string[];
+    entries?: Array<{ slug: string; source: Source }>;
+    filters?: JobFilters;
+    now?: Date;
+  } = {},
 ): Promise<PollSummary> {
   const now = opts.now ?? new Date();
+  const filters = opts.filters ?? (await getJobFilters(db));
 
   let entries: PollEntry[];
   if (opts.entries) {
@@ -78,6 +95,8 @@ export async function runPoll(
   } else {
     let configs = await enabledSourceConfigs(db);
     if (opts.sources?.length) configs = configs.filter((c) => opts.sources!.includes(c.slug));
+    else if (filters.sources?.length)
+      configs = configs.filter((c) => filters.sources!.includes(c.slug));
     entries = configs.map((c) => ({ slug: c.slug, build: () => buildSource(c) }));
   }
 
@@ -87,14 +106,16 @@ export async function runPoll(
   for (const entry of entries) {
     try {
       const source = entry.build();
-      const summaries = await source.search({ keywords: [] });
-      const rows = summaries.map(toJobRow);
+      const summaries = await source.search(filters);
+      const kept = summaries.filter((s) => matchesFilters(s, filters, now));
+      const rows = kept.map(toJobRow);
       const newRows = await insertJobs(db, rows);
       inserted += newRows.length;
-      const enriched = await enrichNewRows(db, source, summaries, newRows);
+      const enriched = await enrichNewRows(db, source, kept, newRows);
       perSource.push({
         slug: entry.slug,
         fetched: summaries.length,
+        filtered: summaries.length - kept.length,
         inserted: newRows.length,
         enriched,
       });
@@ -102,7 +123,14 @@ export async function runPoll(
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       log.error({ event: "poll.source.failed", slug: entry.slug, err: msg }, "source poll failed");
-      perSource.push({ slug: entry.slug, fetched: 0, inserted: 0, enriched: 0, error: msg });
+      perSource.push({
+        slug: entry.slug,
+        fetched: 0,
+        filtered: 0,
+        inserted: 0,
+        enriched: 0,
+        error: msg,
+      });
     }
   }
 

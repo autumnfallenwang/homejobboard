@@ -1,4 +1,10 @@
-import type { JobDetail, JobSummary, Source, SourceConfig } from "@homejobboard/shared";
+import {
+  type JobDetail,
+  type JobSummary,
+  parsePostedSince,
+  type Source,
+  type SourceConfig,
+} from "@homejobboard/shared";
 import { cleanText } from "./html.js";
 import { fetchText } from "./http.js";
 
@@ -61,16 +67,19 @@ export function parseLinkedInDetail(html: string): JobDetail {
 
 export function linkedinSource(config: SourceConfig): Source {
   const p = config.params;
-  const params = new URLSearchParams({
-    keywords: String(p.keywords ?? ""),
-    location: String(p.location ?? ""),
-    f_TPR: String(p.tpr ?? "r86400"),
-    sortBy: "DD",
-    start: "0",
-  });
   return {
     id: config.slug,
-    async search(): Promise<JobSummary[]> {
+    // Source params win; the cross-source JobFilters fill any gaps (LinkedIn is one
+    // of the few boards with true server-side keyword/location/window filtering).
+    async search(filters): Promise<JobSummary[]> {
+      const windowMs = parsePostedSince(filters.postedSince);
+      const params = new URLSearchParams({
+        keywords: String(p.keywords ?? filters.keywords.join(" ")),
+        location: String(p.location ?? filters.location ?? ""),
+        f_TPR: String(p.tpr ?? (windowMs ? `r${Math.floor(windowMs / 1000)}` : "r86400")),
+        sortBy: "DD",
+        start: "0",
+      });
       return parseLinkedInList(await fetchText(`${LIST_URL}?${params.toString()}`));
     },
     async fetchDetail(summary: JobSummary): Promise<JobDetail> {

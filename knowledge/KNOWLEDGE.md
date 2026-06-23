@@ -48,3 +48,5 @@ The skill picks a slug, writes the file with the right frontmatter, and updates 
 - [antibot-blocked-boards](antibot-blocked-boards.md) — `reference` — which boards are walled/gated/dropped and why, so we don't re-research them.
 - [fast-xml-parser-entity-limit](fast-xml-parser-entity-limit.md) — `reference` — big RSS feeds hit fast-xml-parser's entity limit; fix with `processEntities:false` + own decode.
 - [llmgw-gateway](llmgw-gateway.md) — `reference` — the cluster LLM gateway is OpenAI-compatible at `${LLM_GATEWAY_URL}/v1`; models incl. claude-haiku-4-5.
+- [career-ops-harvest-map](career-ops-harvest-map.md) — `reference` — which career-ops file/prompt maps to which homejobboard target (the M07–M11 apply/track/scoring harvest, ADR 0004).
+- [turbo-verification-commands](turbo-verification-commands.md) — `feedback` — verify via turbo (`pnpm typecheck`/`test:fast`/`build`), not the skills' generic root `tsc`/`vitest`.

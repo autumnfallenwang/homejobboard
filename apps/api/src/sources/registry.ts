@@ -2,11 +2,17 @@ import type { Source, SourceConfig } from "@homejobboard/shared";
 import { eq } from "drizzle-orm";
 import type { Database } from "../db/index.js";
 import { sources as sourcesTable } from "../db/schema.js";
+import { ashbySource } from "./ashby.js";
 import { greenhouseSource } from "./greenhouse.js";
+import { hnSource } from "./hn.js";
 import { leverSource } from "./lever.js";
 import { linkedinSource } from "./linkedin.js";
+import { recruiteeSource } from "./recruitee.js";
 import { remoteOkSource } from "./remoteok.js";
 import { remotiveSource } from "./remotive.js";
+import { smartRecruitersSource } from "./smartrecruiters.js";
+import { workableSource } from "./workable.js";
+import { workdaySource } from "./workday.js";
 import { wwrSource } from "./wwr.js";
 
 /** Instantiate the adapter for a source config. Throws on an unimplemented kind. */
@@ -16,6 +22,18 @@ export function buildSource(config: SourceConfig): Source {
       return greenhouseSource(config);
     case "lever":
       return leverSource(config);
+    case "ashby":
+      return ashbySource(config);
+    case "workday":
+      return workdaySource(config);
+    case "smartrecruiters":
+      return smartRecruitersSource(config);
+    case "recruitee":
+      return recruiteeSource(config);
+    case "workable":
+      return workableSource(config);
+    case "hn":
+      return hnSource(config);
     case "remoteok":
       return remoteOkSource(config);
     case "remotive":

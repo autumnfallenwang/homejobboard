@@ -1,6 +1,6 @@
 ---
 name: 06-deploy-gitops
-status: active
+status: onhold
 created: 2026-06-08
 ---
 

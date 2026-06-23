@@ -17,14 +17,20 @@ list, `fetchDetail(summary)` → full description (a no-op for sources that alre
 See ADR [0003](adr/0003-normalized-job-model-and-source-interface.md).
 
 ```
-JobFilters ─▶ [Source adapters]  ─▶ normalize ─▶ dedup ─▶ store (Postgres)
-              Greenhouse/Lever/Ashby (ATS)              │  new+filter-passing only
-              RemoteOK/Remotive/WWR/HN (clean feeds)    ▼
-              Adzuna/USAJobs (free key)            LLM fitness score (llmgw)
-              LinkedIn guest, BuiltIn, Otta (web)       │
-                                                        ▼
-                                              composite rank ─▶ apps/web
+JobFilters ─▶ [Source adapters]  ─▶ normalize ─▶ filter ─▶ dedup ─▶ store (Postgres)
+              Greenhouse/Lever/Ashby (ATS)   matchesFilters   │  new+filter-passing only
+              RemoteOK/Remotive/WWR/HN (clean feeds)          ▼
+              Adzuna/USAJobs (free key)                  LLM fitness score (llmgw)
+              LinkedIn guest, BuiltIn, Otta (web)             │
+                                                              ▼
+                                                    composite rank ─▶ apps/web
 ```
+
+The filter set lives in the `job_filters` setting (a `JobFilters` JSON, edited in the web
+settings UI; default `{"postedSince":"14d"}`). Adapters with server-side filtering
+(LinkedIn) translate it into their own query; everything else is gated client-side by
+`matchesFilters` before insert, so only new + filter-passing jobs are stored and scored.
+Implemented adapters: greenhouse, lever, ashby, remoteok, remotive, wwr, hn, linkedin.
 
 - **Selected sources & access tiers:** ADR [0002](adr/0002-job-source-access-strategy.md); per-source
   endpoints/fields in `knowledge/job-source-access-catalog.md`.
@@ -63,9 +69,11 @@ JobFilters ─▶ [Source adapters]  ─▶ normalize ─▶ dedup ─▶ store 
 
 ## Open questions
 
-- The exact shape of the pre-defined `JobFilters` set (keywords, location, level, postedSince).
+- ~~The exact shape of the pre-defined `JobFilters` set~~ — resolved in 05b: keywords /
+  excludeKeywords / location / workplaceType / postedSince, stored as the `job_filters` setting.
 - The LLM fitness prompt, inputs, scale, and which `llmgw` model (milestone 04).
-- The application "send out" mechanism — what "quick way to send out" concretely means.
-- **ATS company-list sourcing** — how to seed/grow the Greenhouse/Lever/Ashby company tokens
-  (`knowledge/ats-company-slug-sourcing.md`).
+- The application "send out" mechanism — open `applyUrl` + track applied/dismissed (M05);
+  drafting/automation still open.
+- **ATS company-list sourcing** — seeded a curated 11-board starter list (05b); grows via the
+  settings-UI add-board form (`knowledge/ats-company-slug-sourcing.md`).
 - Whether a free **Adzuna** / **JSearch** key closes any of the Indeed/Wellfound gap (cheap to test).

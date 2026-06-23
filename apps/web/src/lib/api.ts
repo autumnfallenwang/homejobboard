@@ -1,11 +1,22 @@
 // Typed HTTP client for the Hono backend. Server components call the read fns;
 // client components call the mutations. Mirrors the homework house pattern.
 
-import type { Job, JobScore, JobStatus, SourceConfig } from "@homejobboard/shared";
+import type { CreateSource, Job, JobScore, JobStatus, SourceConfig } from "@homejobboard/shared";
 
 /** A job as returned by the feed/detail endpoints: the row plus its score (nullable). */
 export type FeedJob = Job & { score: JobScore | null; rank?: number };
+/** The detail endpoint adds the duplicate listings folded into this job. */
+export type JobDetailResponse = FeedJob & {
+  alsoSeenOn: Array<{ id: string; source: string; url: string }>;
+};
 export type SettingRow = { key: string; value: string };
+export type FeedStats = {
+  new: number;
+  applied: number;
+  dismissed: number;
+  unscored: number;
+  lastPolledAt: string | null;
+};
 
 /**
  * Dual-context base URL: server (SSR) prefers in-cluster `API_URL`, browser uses the
@@ -57,6 +68,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export interface FeedQuery {
   sort?: "recent" | "rank";
   status?: JobStatus;
+  q?: string;
+  source?: string;
+  minScore?: number;
   limit?: number;
   offset?: number;
 }
@@ -65,14 +79,21 @@ export function listFeed(q: FeedQuery = {}): Promise<FeedJob[]> {
   const p = new URLSearchParams();
   if (q.sort) p.set("sort", q.sort);
   if (q.status) p.set("status", q.status);
+  if (q.q) p.set("q", q.q);
+  if (q.source) p.set("source", q.source);
+  if (q.minScore != null) p.set("minScore", String(q.minScore));
   if (q.limit != null) p.set("limit", String(q.limit));
   if (q.offset != null) p.set("offset", String(q.offset));
   const qs = p.toString();
   return request<FeedJob[]>(`/jobs${qs ? `?${qs}` : ""}`);
 }
 
-export function getJob(id: string): Promise<FeedJob> {
-  return request<FeedJob>(`/jobs/${id}`);
+export function getJob(id: string): Promise<JobDetailResponse> {
+  return request<JobDetailResponse>(`/jobs/${id}`);
+}
+
+export function getStats(): Promise<FeedStats> {
+  return request<FeedStats>("/stats");
 }
 
 export function setJobStatus(id: string, status: JobStatus): Promise<Job> {
@@ -90,6 +111,14 @@ export function setSourceEnabled(id: string, enabled: boolean): Promise<SourceCo
     method: "PATCH",
     body: JSON.stringify({ enabled }),
   });
+}
+
+export function createSource(input: CreateSource): Promise<SourceConfig> {
+  return request<SourceConfig>("/sources", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function deleteSource(id: string): Promise<SourceConfig> {
+  return request<SourceConfig>(`/sources/${id}`, { method: "DELETE" });
 }
 
 // --- Pipeline triggers ---

@@ -1,6 +1,9 @@
 # POC / scratch reconnaissance — not committed
 poc/
 
+# Playwright MCP scratch (snapshots/console logs from manual testing)
+.playwright-mcp/
+
 # Dependencies
 node_modules/
 .pnp

@@ -1,0 +1,35 @@
+{
+  "offers": [
+    {
+      "id": 101,
+      "slug": "senior-platform-engineer",
+      "title": "Senior Platform Engineer",
+      "description": "<p>Build and scale our platform infrastructure.</p>",
+      "location": "Berlin, Germany",
+      "city": "Berlin",
+      "country": "Germany",
+      "remote": false,
+      "hybrid": true,
+      "careers_url": "https://acme.recruitee.com/o/senior-platform-engineer",
+      "careers_apply_url": "https://acme.recruitee.com/o/senior-platform-engineer/c/new",
+      "employment_type_code": "fulltime",
+      "published_at": "2026-06-12 10:00:00 UTC",
+      "created_at": "2026-06-12 09:00:00 UTC"
+    },
+    {
+      "id": 102,
+      "slug": "staff-backend-engineer",
+      "title": "Staff Backend Engineer",
+      "location": "Remote",
+      "remote": true,
+      "careers_url": "https://jobs.brandco.com/o/staff-backend-engineer",
+      "careers_apply_url": "https://jobs.brandco.com/o/staff-backend-engineer/c/new",
+      "published_at": "2026-06-11 08:30:00 UTC"
+    },
+    {
+      "id": 103,
+      "title": "Broken offer (no slug, bad url)",
+      "careers_url": "ftp://nope.example.com/x"
+    }
+  ]
+}

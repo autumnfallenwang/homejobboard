@@ -20,7 +20,22 @@ are the *how*. Work them in order — each depends on the prior. Run one at a ti
 | 03 | [Source adapters & ingestion](03-source-adapters-and-ingestion.md) | `Source` interface + Tier-1 adapters + normalize→dedup→store + poll scheduler | 02 |
 | 04 | [LLM fitness scoring & ranking](04-llm-fitness-scoring-and-ranking.md) | `llmgw` client, fitness score on new jobs, composite rank | 03 |
 | 05 | [Web frontend](05-web-frontend.md) | Ranked-job views, filter config, detail, quick send-out | 02, 04 |
-| 06 | [Deploy & GitOps](06-deploy-gitops.md) | Dockerfiles, Helm chart, CI, arch-infra registration | 01–05 |
+| 05b | [Product polish](05b-product-polish.md) | Filters wired into ingestion, Ashby + HN adapters, seed expansion, UI redesign | 05 |
+| 06 | [Deploy & GitOps](06-deploy-gitops.md) | Dockerfiles, Helm chart, CI, arch-infra registration | 01–05b |
+
+### Post-MVP — harvest career-ops (ADR [0004](../adr/0004-harvest-career-ops.md))
+
+Adopt the MIT-licensed career-ops system (vendored at `poc/career-ops/`) as a **parts donor** for the
+apply / track / learn halves the MVP lacks. homejobboard stays the spine; career-ops supplies the
+intelligence. File-level map: `knowledge/career-ops-harvest-map.md`.
+
+| # | Milestone | What ships | Depends on |
+|---|-----------|-----------|------------|
+| 07 | [Source-layer expansion](07-source-layer-expansion.md) | Workday/SmartRecruiters/Recruitee/Workable adapters + Tier-2/3 finishers; ported liveness + role-match dedup | 03 |
+| 08 | [Scoring rubric upgrade](08-scoring-rubric-upgrade.md) | A–G structured `FitnessVerdict` (explainable scoring) via one llmgw call | 04 |
+| 09 | [Application material generation](09-application-material-generation.md) | Tailored CV→ATS PDF + cover letter, on-demand, never auto-submitted | 04, 05 |
+| 10 | [Tracking + follow-up](10-tracking-and-followup.md) | Canonical status state-machine + follow-up cadence/drafting | 05 |
+| 11 | [Pattern analysis + feedback loop](11-pattern-analysis-and-feedback-loop.md) | Outcome insights that suggest filter/profile edits — closes the 4→1 loop | 08, 10 |
 
 ## Cross-cutting decisions (locked)
 
@@ -36,15 +51,17 @@ are the *how*. Work them in order — each depends on the prior. Run one at a ti
 
 ## Standing open questions (need input before the relevant milestone)
 
-1. **`JobFilters` shape** (M03/M05) — exact filter fields the user wants (keywords sets, locations,
-   levels, postedSince window).
-2. **ATS company list** (M03) — how to seed the Greenhouse/Lever/Ashby company tokens; see
-   `knowledge/ats-company-slug-sourcing.md`. *(blocking for ATS adapters)*
+1. ~~**`JobFilters` shape**~~ — resolved (05b): keywords / excludeKeywords / location /
+   workplaceType / postedSince, stored as the `job_filters` setting, editable in the settings UI.
+2. ~~**ATS company list**~~ — resolved (05b): curated 11-board starter list seeded (all tokens
+   live-validated); grows via the settings-UI add-board form. See
+   `knowledge/ats-company-slug-sourcing.md`.
 3. **Free keys** (M03) — provide free **Adzuna** + **JSearch** keys to validate Tier-2 + test the
    Indeed/Wellfound gap. *(non-blocking; ATS/feeds work without them)*
-4. **Fitness prompt & model** (M04) — what makes a job a good fit (the user's profile/criteria), and
-   which `llmgw` model.
-5. **"Send out"** (M05) — what the quick-apply action concretely does (open apply URL / draft / track).
+4. **Fitness prompt & model** (M04) — resolved baseline: claude-haiku-4-5 via llmgw, profile in the
+   `fitness_profile` setting. The user should keep refining the profile text.
+5. **"Send out"** (M05) — resolved baseline: open `applyUrl` + track applied/dismissed.
+   Drafting/automation still open if ever wanted.
 
 ## How to work a milestone
 

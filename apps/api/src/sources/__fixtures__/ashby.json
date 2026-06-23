@@ -1,0 +1,73 @@
+{
+  "apiVersion": 1,
+  "jobs": [
+    {
+      "id": "8fb1615c-34bf-47c4-a1d1-b7b2f836bbd3",
+      "title": "Software Engineer, Infrastructure",
+      "department": "Engineering",
+      "team": "Platform",
+      "employmentType": "FullTime",
+      "location": "San Francisco",
+      "secondaryLocations": [],
+      "publishedAt": "2026-06-02T16:38:15.322+00:00",
+      "isListed": true,
+      "isRemote": null,
+      "workplaceType": "Hybrid",
+      "address": {
+        "postalAddress": {
+          "addressRegion": "California",
+          "addressCountry": "United States",
+          "addressLocality": "San Francisco"
+        }
+      },
+      "jobUrl": "https://jobs.ashbyhq.com/openai/8fb1615c-34bf-47c4-a1d1-b7b2f836bbd3",
+      "applyUrl": "https://jobs.ashbyhq.com/openai/8fb1615c-34bf-47c4-a1d1-b7b2f836bbd3/application",
+      "descriptionHtml": "<h3>About the Team</h3><p>We run the GPU fleet.</p>",
+      "compensation": {
+        "compensationTierSummary": "$257K – $335K • Offers Equity",
+        "scrapeableCompensationSalarySummary": "$257K - $335K",
+        "compensationTiers": [],
+        "summaryComponents": [
+          {
+            "compensationType": "Salary",
+            "interval": "1 YEAR",
+            "currencyCode": "USD",
+            "minValue": 257000,
+            "maxValue": 335000
+          },
+          {
+            "compensationType": "EquityCashValue",
+            "interval": "1 YEAR",
+            "currencyCode": "USD",
+            "minValue": null,
+            "maxValue": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "11111111-2222-3333-4444-555555555555",
+      "title": "Research Scientist",
+      "department": "Research",
+      "team": "Research",
+      "employmentType": "FullTime",
+      "location": "Remote",
+      "secondaryLocations": [],
+      "publishedAt": "2026-06-05T10:00:00.000+00:00",
+      "isListed": true,
+      "isRemote": true,
+      "workplaceType": null,
+      "jobUrl": "https://jobs.ashbyhq.com/openai/11111111-2222-3333-4444-555555555555",
+      "applyUrl": null,
+      "descriptionHtml": null,
+      "descriptionPlain": "Plain-text fallback description.",
+      "compensation": null
+    },
+    {
+      "id": "99999999-8888-7777-6666-555555555555",
+      "title": "Unlisted internal req",
+      "isListed": false,
+      "jobUrl": "https://jobs.ashbyhq.com/openai/99999999-8888-7777-6666-555555555555"
+    }
+  ]
+}

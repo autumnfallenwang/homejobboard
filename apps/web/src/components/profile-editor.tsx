@@ -26,8 +26,8 @@ export function ProfileEditor({ initial }: { initial: string }) {
           setValue(e.target.value);
           setSaved("idle");
         }}
-        rows={5}
-        className="w-full rounded border border-border bg-card p-2 text-sm"
+        rows={6}
+        className="w-full rounded border border-border bg-card p-3 text-sm leading-relaxed focus:border-primary focus:outline-none"
         placeholder="Describe your ideal job: role, stack, level, location/remote, comp, dealbreakers."
       />
       <div className="flex items-center gap-3">
@@ -35,15 +35,15 @@ export function ProfileEditor({ initial }: { initial: string }) {
           type="button"
           onClick={save}
           disabled={saved === "saving"}
-          className="rounded bg-primary px-3 py-1.5 font-medium text-sm text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded bg-primary px-3 py-1.5 font-medium text-background text-sm transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {saved === "saving" ? "Saving…" : "Save profile"}
         </button>
-        {saved === "done" && <span className="text-muted text-sm">Saved ✓</span>}
+        {saved === "done" && <span className="font-mono text-muted text-xs">saved ✓</span>}
+        <span className="font-mono text-[11px] text-muted">
+          only newly-scored jobs use the updated profile
+        </span>
       </div>
-      <p className="text-muted text-xs">
-        New scores use this profile. Re-score from the feed's Refresh, or the buttons below.
-      </p>
     </div>
   );
 }

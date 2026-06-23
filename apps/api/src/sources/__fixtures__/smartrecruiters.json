@@ -1,0 +1,27 @@
+{
+  "totalFound": 2,
+  "content": [
+    {
+      "id": "744000000123456",
+      "name": "Senior Backend Engineer",
+      "ref": "https://api.smartrecruiters.com/v1/companies/Square/postings/744000000123456",
+      "releasedDate": "2026-06-10T00:00:00.000Z",
+      "location": {
+        "city": "San Francisco",
+        "region": "California",
+        "country": "us",
+        "remote": false
+      }
+    },
+    {
+      "id": "744000000654321",
+      "name": "Staff Data Scientist",
+      "releasedDate": null,
+      "createdOn": "2026-06-08T12:30:00.000Z",
+      "location": {
+        "country": "us",
+        "remote": true
+      }
+    }
+  ]
+}

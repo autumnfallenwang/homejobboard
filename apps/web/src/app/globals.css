@@ -7,18 +7,91 @@
   --color-border: var(--border);
   --color-card: var(--card);
   --color-primary: var(--primary);
+  --color-success: var(--success);
+  --color-warn: var(--warn);
+  --font-display: var(--font-fraunces), georgia, serif;
+  --font-sans: var(--font-plex-sans), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 }
 
+/* Editorial broadsheet: warm paper + warm ink, vermilion accent. */
 :root {
-  --background: oklch(0.99 0.002 240);
-  --foreground: oklch(0.25 0.01 240);
-  --muted: oklch(0.6 0.01 240);
-  --border: oklch(0.9 0.005 240);
-  --card: oklch(1 0 0);
-  --primary: oklch(0.55 0.18 255);
+  --background: oklch(0.967 0.008 85);
+  --foreground: oklch(0.245 0.018 60);
+  --muted: oklch(0.52 0.02 70);
+  --border: oklch(0.885 0.012 80);
+  --card: oklch(0.985 0.005 90);
+  --primary: oklch(0.55 0.19 35);
+  --success: oklch(0.52 0.12 165);
+  --warn: oklch(0.62 0.13 70);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.19 0.012 60);
+    --foreground: oklch(0.915 0.015 85);
+    --muted: oklch(0.64 0.02 75);
+    --border: oklch(0.3 0.015 60);
+    --card: oklch(0.225 0.014 60);
+    --primary: oklch(0.68 0.17 40);
+    --success: oklch(0.72 0.12 165);
+    --warn: oklch(0.76 0.12 80);
+  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-plex-sans), system-ui, sans-serif;
+  position: relative;
+}
+
+/* Paper grain — barely-there noise so flat panels read as stock, not pixels. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--background);
+}
+
+/* Feed rows rise in on load, stagger via --i (set inline, capped by the caller). */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise 0.4s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 28ms);
+}
+
+/* Score meter fill sweeps in. */
+@keyframes sweep {
+  from {
+    transform: scaleX(0);
+  }
+}
+.sweep {
+  transform-origin: left;
+  animation: sweep 0.6s 0.15s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .sweep {
+    animation: none;
+  }
 }

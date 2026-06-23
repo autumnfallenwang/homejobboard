@@ -1,0 +1,19 @@
+{
+  "total": 2,
+  "jobPostings": [
+    {
+      "title": "Senior Software Engineer, Platform",
+      "externalPath": "/job/US-CA-Santa-Clara/Senior-Software-Engineer--Platform_JR1993456",
+      "locationsText": "US, CA, Santa Clara",
+      "postedOn": "Posted Today",
+      "bulletFields": ["JR1993456"]
+    },
+    {
+      "title": "Staff Machine Learning Engineer",
+      "externalPath": "/job/US-Remote/Staff-Machine-Learning-Engineer_JR1990001",
+      "locationsText": "US, Remote",
+      "postedOn": "Posted 30+ Days Ago",
+      "bulletFields": ["JR1990001"]
+    }
+  ]
+}
