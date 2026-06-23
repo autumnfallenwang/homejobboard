@@ -17,6 +17,13 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
   llm_model_fitness: "claude-haiku-4-5",
   llm_model_fitness_fallback: "gemma4:26b",
   score_batch_size: "50",
+  // Canonical CV (markdown), edited in settings — the source of truth the per-job
+  // CV/cover-letter generation tailors from (M09). Empty until the user fills it in.
+  cv: "",
+  // Materials generation is on-demand + low-volume, so it uses a stronger model than
+  // batch scoring. Falls back to the local model on a primary failure.
+  llm_model_materials: "claude-sonnet-4-5",
+  llm_model_materials_fallback: "gemma4:26b",
 };
 
 export async function getSetting(db: Database, key: string): Promise<string | undefined> {

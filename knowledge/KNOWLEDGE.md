@@ -50,3 +50,4 @@ The skill picks a slug, writes the file with the right frontmatter, and updates 
 - [llmgw-gateway](llmgw-gateway.md) — `reference` — the cluster LLM gateway is OpenAI-compatible at `${LLM_GATEWAY_URL}/v1`; models incl. claude-haiku-4-5.
 - [career-ops-harvest-map](career-ops-harvest-map.md) — `reference` — which career-ops file/prompt maps to which homejobboard target (the M07–M11 apply/track/scoring harvest, ADR 0004).
 - [turbo-verification-commands](turbo-verification-commands.md) — `feedback` — verify via turbo (`pnpm typecheck`/`test:fast`/`build`), not the skills' generic root `tsc`/`vitest`.
+- [browser-print-pdf-over-playwright](browser-print-pdf-over-playwright.md) — `feedback` — prefer browser print-to-PDF (styled HTML) over a server headless browser for document output.

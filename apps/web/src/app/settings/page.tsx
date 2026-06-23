@@ -1,4 +1,5 @@
 import { type JobFilters, jobFiltersSchema, type SourceConfig } from "@homejobboard/shared";
+import { CvEditor } from "@/components/cv-editor";
 import { FiltersEditor } from "@/components/filters-editor";
 import { ProfileEditor } from "@/components/profile-editor";
 import { SourceToggles } from "@/components/source-toggles";
@@ -28,6 +29,7 @@ export default async function Settings() {
   }
 
   const profile = settings.find((s) => s.key === "fitness_profile")?.value ?? "";
+  const cv = settings.find((s) => s.key === "cv")?.value ?? "";
   const filters = parseFilters(settings.find((s) => s.key === "job_filters")?.value);
 
   return (
@@ -42,6 +44,14 @@ export default async function Settings() {
 
       <Section
         n="02"
+        title="Canonical CV"
+        hint="Your résumé in markdown — the source of truth for tailored CVs and cover letters (per job, from the detail view). Never auto-submitted."
+      >
+        <CvEditor initial={cv} />
+      </Section>
+
+      <Section
+        n="03"
         title="Pre-filters"
         hint="Applied at ingestion, before storing or scoring — cuts noise and LLM cost. Empty = keep everything."
       >
@@ -49,7 +59,7 @@ export default async function Settings() {
       </Section>
 
       <Section
-        n="03"
+        n="04"
         title="Sources"
         hint="Boards polled on the schedule. ATS boards are per-company — add any company that runs Greenhouse, Lever, or Ashby."
       >

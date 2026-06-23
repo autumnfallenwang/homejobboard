@@ -1,7 +1,10 @@
-import { jobStatusSchema } from "@homejobboard/shared";
+import { jobStatusSchema, materialKindSchema } from "@homejobboard/shared";
 import { Hono } from "hono";
 import { db } from "../db/index.js";
 import { getJob, getScore, listDuplicatesOf, listFeed, setJobStatus } from "../db/queries.js";
+import { log } from "../lib/logger.js";
+import { generateMaterial } from "../materials/generate.js";
+import { getSettingOr } from "../services/settings.js";
 
 export const jobsApp = new Hono();
 
@@ -35,4 +38,34 @@ jobsApp.patch("/:id", async (c) => {
   const row = await setJobStatus(db, c.req.param("id"), parsed.data);
   if (!row) return c.json({ error: "not found" }, 404);
   return c.json(row);
+});
+
+// POST /jobs/:id/materials  { kind: "cv" | "cover" } — generate a job-tailored CV or
+// cover letter as markdown (the web renders + prints it). Never auto-submits.
+jobsApp.post("/:id/materials", async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const parsed = materialKindSchema.safeParse((body as { kind?: unknown }).kind);
+  if (!parsed.success) return c.json({ error: "invalid kind (cv|cover)" }, 400);
+
+  const row = await getJob(db, c.req.param("id"));
+  if (!row) return c.json({ error: "not found" }, 404);
+
+  const cv = await getSettingOr(db, "cv");
+  if (!cv.trim()) return c.json({ error: "no CV set — add your CV in settings first" }, 400);
+
+  try {
+    const result = await generateMaterial(db, row, parsed.data);
+    return c.json({ kind: parsed.data, ...result });
+  } catch (err) {
+    log.error(
+      {
+        event: "materials.failed",
+        jobId: row.id,
+        kind: parsed.data,
+        err: err instanceof Error ? err.message : err,
+      },
+      "material generation failed",
+    );
+    return c.json({ error: "generation failed" }, 502);
+  }
 });

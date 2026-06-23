@@ -1,7 +1,14 @@
 // Typed HTTP client for the Hono backend. Server components call the read fns;
 // client components call the mutations. Mirrors the homework house pattern.
 
-import type { CreateSource, Job, JobScore, JobStatus, SourceConfig } from "@homejobboard/shared";
+import type {
+  CreateSource,
+  Job,
+  JobScore,
+  JobStatus,
+  MaterialKind,
+  SourceConfig,
+} from "@homejobboard/shared";
 
 /** A job as returned by the feed/detail endpoints: the row plus its score (nullable). */
 export type FeedJob = Job & { score: JobScore | null; rank?: number };
@@ -90,6 +97,14 @@ export function listFeed(q: FeedQuery = {}): Promise<FeedJob[]> {
 
 export function getJob(id: string): Promise<JobDetailResponse> {
   return request<JobDetailResponse>(`/jobs/${id}`);
+}
+
+/** Generate a job-tailored CV or cover letter (markdown). Never auto-submits. */
+export function generateMaterial(
+  jobId: string,
+  kind: MaterialKind,
+): Promise<{ kind: MaterialKind; content: string; model: string }> {
+  return request(`/jobs/${jobId}/materials`, { method: "POST", body: JSON.stringify({ kind }) });
 }
 
 export function getStats(): Promise<FeedStats> {

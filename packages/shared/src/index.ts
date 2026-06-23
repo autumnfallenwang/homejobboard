@@ -3,5 +3,6 @@
 
 export * from "./filters.js";
 export * from "./job.js";
+export * from "./materials.js";
 export * from "./score.js";
 export * from "./source.js";

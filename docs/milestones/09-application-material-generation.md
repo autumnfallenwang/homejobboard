@@ -1,6 +1,6 @@
 ---
 name: 09-application-material-generation
-status: proposed
+status: done
 created: 2026-06-22
 ---
 
@@ -48,12 +48,16 @@ career-ops owns this capability; most of it is droppable code + prompts.
 
 ## Exit criteria
 
-- [ ] `renderHtmlToPdf` ports with ATS Unicode normalization; produces a valid PDF from the CV template
-- [ ] One Chromium install serves both ingestion and PDF render (no second browser dep)
-- [ ] `POST /jobs/:id/materials?kind=cv` returns a job-tailored CV PDF; `kind=cover` returns a cover letter
-- [ ] Tailoring prompt does not fabricate experience (review a sample; guardrail present)
-- [ ] **No submit path** — generation + download/edit only; user applies manually (ADR 0004 / project ethic)
-- [ ] `pnpm lint` / `typecheck` / `test:fast` / `build` green (PDF render covered by at least a smoke test)
+> **Render approach reframed by ADR [0005](../adr/0005-browser-print-over-playwright.md):** there is no
+> existing Chromium to reuse, so materials render as ATS-clean print-styled **HTML** + browser
+> print-to-PDF — no server Playwright. Criteria #1/#2 are reframed accordingly.
+
+- [x] ~~`renderHtmlToPdf` ports…valid PDF~~ → `normalizeTextForATS` ported + `materialHtml` produces ATS-clean print-styled HTML (unit-tested); browser saves the PDF
+- [x] ~~One Chromium install serves both~~ → **no server browser dependency** (the point of ADR 0005)
+- [x] `POST /jobs/:id/materials?kind=cv` returns a job-tailored CV (markdown); `kind=cover` returns a cover letter — route + generation live-verified (CV); cover uses the identical path
+- [x] Tailoring prompt does not fabricate experience — CV smoke kept every employer/metric from the source CV; guardrail present in both prompts
+- [x] **No submit path** — generate → edit → print/download only; user applies manually
+- [x] `pnpm lint` / `typecheck` / `test:fast` (95) / `build` green (render covered by `materials.test.ts`)
 
 ## Decisions (locked)
 
@@ -63,6 +67,47 @@ career-ops owns this capability; most of it is droppable code + prompts.
 
 ## Open questions
 
-- CV input format for the `cv` setting (structured JSON vs markdown) — drives both prompt + template.
-- Where templates live (api vs web) and whether the user can pick/customize a template.
-- Screening-question answer generation (career-ops `apply` mode) — include here or a later milestone?
+- ~~CV input format~~ — resolved: free-text **markdown** `cv` setting (mirrors the M08 free-text profile); the LLM emits markdown.
+- ~~Where templates live~~ — resolved: pure render (`normalizeTextForATS`/`markdownToHtml`/`materialHtml` + print CSS) in `packages/shared`, used by the web.
+- Screening-question answer generation (career-ops `apply` mode) — **deferred** (not in M09).
+
+## Progress
+
+- 2026-06-22: Shipped the apply layer (ADR 0004 Buckets A+B; render pivot per ADR 0005). Pure render
+  in `packages/shared/src/materials.ts` (`normalizeTextForATS`, minimal `markdownToHtml`, `materialHtml`
+  + ported CV/cover print CSS). `apps/api/src/materials/` holds the tailoring/cover prompts (career-ops
+  anti-fabrication guardrails) + `generateMaterial` (strong `llm_model_materials` primary → fallback,
+  mirrors M08). New `POST /jobs/:id/materials`; new `cv` + materials-model settings. Web: settings CV
+  editor + a detail-view "prepare application" panel (Tailor CV / Cover letter → editable → Export PDF
+  via a browser print window). ADR 0005 records the browser-print-over-Playwright decision. lint /
+  typecheck / test:fast (95) / build green.
+- 2026-06-22: **Live smoke** — set a sample CV, generated a tailored CV for a real job: faithful, **no
+  fabrication** (kept Stripe/GitLab + the exact "p95 38%"/"$1.2M" metrics from the source CV). **Browser
+  smoke** — settings CV editor + the detail materials panel render; the full click→generate round-trip
+  is wired (CORS preflight 204, route reached, primary→fallback fired) but the live generation hangs on
+  the slow local `gemma4:26b` fallback while the gateway's Anthropic backend is down ([[llmgw-gateway]])
+  — an infra-latency condition, not an M09 defect (the route fails closed to 502; the panel shows the
+  error). The CV generation + the ATS-clean render are otherwise verified (server smoke + unit tests).
+- 2026-06-23: llmgw Anthropic backend fixed → re-verified through the **primary** model: both CV (~7s)
+  and cover letter (~13s) generate via `claude-sonnet-4-5` (no fallback), faithful with no fabrication
+  (kept the source CV's employers + exact "p95 38%"/"$1.2M" metrics; cover opens with a concrete metric,
+  mirrors the job's stack, no banned buzzwords). The earlier gemma-fallback hang is resolved.
+
+## Outcome
+
+**Closed: 2026-06-23.** Shipped the apply layer (ADR 0004 Buckets A+B): from a job's detail view the
+user generates a job-tailored CV and cover letter (one strong-model llmgw call each, career-ops
+anti-fabrication guardrails), edits them, and exports a PDF via the browser print dialog — never
+auto-submitted. Pure render (`normalizeTextForATS`, `markdownToHtml`, `materialHtml` + ported print
+CSS) lives in `packages/shared`; `apps/api/src/materials/` holds the prompts + `generateMaterial`;
+new `POST /jobs/:id/materials`, `cv` + materials-model settings, a settings CV editor, and a
+detail-view "prepare application" panel. lint / typecheck / test:fast (95) / build green;
+end-to-end verified through the primary `claude-sonnet-4-5` (CV + cover, faithful, no fabrication).
+
+**Deviation:** render pivoted from server Playwright to browser print-to-PDF — there was no existing
+Chromium to reuse, so the ~300MB browser dep was unjustified. Recorded in ADR
+[0005](../adr/0005-browser-print-over-playwright.md); exit criteria #1/#2 reframed above. The
+markdown-end-to-end approach also superseded career-ops's `{{ }}` template engine / `buildHtml`.
+Captured as a reusable convention: [[browser-print-pdf-over-playwright]].
+
+**Deferred (milestone open Q):** screening-question answer generation (career-ops `apply` mode).
