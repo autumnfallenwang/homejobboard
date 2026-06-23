@@ -43,6 +43,7 @@ describe("jobScoreSchema", () => {
       id: "22222222-2222-2222-2222-222222222222",
       jobId: storedJob.id,
       reasons: null,
+      verdict: null,
       model: "claude",
       composite: 0.5,
       scoredAt: "2026-06-08T12:02:00.000Z",

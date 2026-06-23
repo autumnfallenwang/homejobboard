@@ -1,5 +1,7 @@
 // Presentation helpers — pure, unit-tested.
 
+import type { FitnessRecommendation } from "@homejobboard/shared";
+
 /** "just now" / "3h ago" / "2d ago" from an ISO string (or "" when absent). */
 export function formatRelativeTime(iso: string | null | undefined, now: Date = new Date()): string {
   if (!iso) return "";
@@ -26,6 +28,26 @@ export function scoreFill(fitness: number): string {
   if (fitness >= 80) return "bg-success";
   if (fitness >= 60) return "bg-foreground";
   if (fitness >= 40) return "bg-warn";
+  return "bg-muted";
+}
+
+const RECOMMENDATION: Record<FitnessRecommendation, { label: string; color: string }> = {
+  apply: { label: "Apply", color: "text-success border-success/40" },
+  consider: { label: "Consider", color: "text-foreground border-border" },
+  research: { label: "Research", color: "text-warn border-warn/40" },
+  skip: { label: "Skip", color: "text-muted border-border/60" },
+};
+
+/** Display label + chip color tokens for a verdict recommendation. */
+export function recommendation(rec: FitnessRecommendation): { label: string; color: string } {
+  return RECOMMENDATION[rec];
+}
+
+/** Background token for a 0–5 sub-score bar fill. */
+export function subScoreFill(n: number): string {
+  if (n >= 4) return "bg-success";
+  if (n >= 3) return "bg-foreground";
+  if (n >= 2) return "bg-warn";
   return "bg-muted";
 }
 

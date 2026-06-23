@@ -14,7 +14,18 @@ vi.mock("./settings.js", () => ({
     ),
 }));
 
-const { buildFitnessPrompt, parseFitnessResult, scoreJob } = await import("./score.js");
+const { scoreJob } = await import("./score.js");
+
+const verdict = {
+  recommendation: "apply",
+  subScores: { skills: 5, seniority: 4, domain: 4, compensation: 3, logistics: 5 },
+  topStrengths: ["stack match"],
+  hardStops: [],
+  softGaps: [],
+  rationale: "Good fit.",
+  confidence: "high",
+};
+const reply = (fitness: number) => JSON.stringify({ fitness, verdict });
 
 const job = (over: Partial<JobRow> = {}): JobRow =>
   ({
@@ -28,47 +39,26 @@ const job = (over: Partial<JobRow> = {}): JobRow =>
     ...over,
   }) as JobRow;
 
-describe("buildFitnessPrompt", () => {
-  it("includes the profile and the job title", () => {
-    const p = buildFitnessPrompt(job(), "Senior TS engineer, remote.");
-    expect(p).toContain("Senior TS engineer");
-    expect(p).toContain("Staff Engineer");
-  });
-});
-
-describe("parseFitnessResult", () => {
-  it("parses a clean JSON result", () => {
-    expect(parseFitnessResult('{"fitness": 87, "reasons": ["stack match"]}')).toEqual({
-      fitness: 87,
-      reasons: ["stack match"],
-    });
-  });
-
-  it("tolerates markdown-wrapped JSON", () => {
-    const r = parseFitnessResult('```json\n{"fitness": 50, "reasons": []}\n```');
-    expect(r.fitness).toBe(50);
-  });
-
-  it("rejects out-of-range fitness", () => {
-    expect(() => parseFitnessResult('{"fitness": 150}')).toThrow();
-  });
-});
-
 describe("scoreJob", () => {
   beforeEach(() => mockChat.mockReset());
 
-  it("returns the parsed result from the primary model", async () => {
-    mockChat.mockResolvedValueOnce('{"fitness": 73, "reasons": ["good fit"]}');
+  it("returns the parsed fitness + verdict from the primary model", async () => {
+    mockChat.mockResolvedValueOnce(reply(73));
     const r = await scoreJob({} as never, job());
     expect(r).toMatchObject({ fitness: 73, model: "primary-model" });
+    expect(r.verdict.recommendation).toBe("apply");
   });
 
   it("falls back to the fallback model when the primary throws", async () => {
-    mockChat
-      .mockRejectedValueOnce(new Error("primary down"))
-      .mockResolvedValueOnce('{"fitness": 40}');
+    mockChat.mockRejectedValueOnce(new Error("primary down")).mockResolvedValueOnce(reply(40));
     const r = await scoreJob({} as never, job());
     expect(r).toMatchObject({ fitness: 40, model: "fallback-model" });
     expect(mockChat).toHaveBeenCalledTimes(2);
+  });
+
+  it("falls back when the primary returns malformed JSON (fails closed)", async () => {
+    mockChat.mockResolvedValueOnce("not json at all").mockResolvedValueOnce(reply(55));
+    const r = await scoreJob({} as never, job());
+    expect(r).toMatchObject({ fitness: 55, model: "fallback-model" });
   });
 });

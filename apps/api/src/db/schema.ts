@@ -1,3 +1,4 @@
+import type { FitnessVerdict } from "@homejobboard/shared";
 import {
   boolean,
   doublePrecision,
@@ -73,6 +74,8 @@ export const jobScores = pgTable("job_scores", {
     .unique(),
   fitness: integer().notNull(),
   reasons: text().array(),
+  // Structured rubric verdict (M08); null on pre-M08 rows.
+  verdict: jsonb().$type<FitnessVerdict>(),
   model: text().notNull(),
   composite: doublePrecision().notNull(),
   scoredAt: timestamp({ withTimezone: true }).notNull().defaultNow(),

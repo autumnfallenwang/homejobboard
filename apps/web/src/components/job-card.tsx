@@ -1,20 +1,28 @@
 import Link from "next/link";
 import type { FeedJob } from "@/lib/api";
-import { formatRelativeTime, formatSalary } from "@/lib/format";
+import { formatRelativeTime, formatSalary, recommendation } from "@/lib/format";
 import { ScoreBadge } from "./score-badge";
 
 /** One ruled feed row: score meter | serif title + company line | data chips. */
 export function JobCard({ job, index = 0 }: { job: FeedJob; index?: number }) {
   const salary = formatSalary(job.salaryMin, job.salaryMax);
-  const topReason = job.score?.reasons?.[0];
+  const topReason = job.score?.verdict?.rationale ?? job.score?.reasons?.[0];
+  const rec = job.score?.verdict ? recommendation(job.score.verdict.recommendation) : null;
 
   return (
     <article
       className="rise group flex items-start gap-4 border-border border-b py-3.5"
       style={{ "--i": Math.min(index, 16) } as React.CSSProperties}
     >
-      <div className="w-12 shrink-0 pt-1 text-right">
+      <div className="flex w-12 shrink-0 flex-col items-end pt-1 text-right">
         <ScoreBadge fitness={job.score?.fitness} />
+        {rec && (
+          <span
+            className={`mt-1 rounded border px-1 font-mono text-[9px] uppercase tracking-wider ${rec.color}`}
+          >
+            {rec.label}
+          </span>
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <h3 className="font-display text-[17px] leading-snug">

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionBar } from "@/components/action-bar";
 import { ScoreBadge } from "@/components/score-badge";
+import { VerdictPanel } from "@/components/verdict-panel";
 import { getJob, type JobDetailResponse } from "@/lib/api";
 import { descriptionBlocks, formatRelativeTime, formatSalary } from "@/lib/format";
 
@@ -80,15 +81,20 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
                   {job.score?.model && <span className="block text-end">{job.score.model}</span>}
                 </span>
               </div>
-              {job.score?.reasons && job.score.reasons.length > 0 && (
-                <ul className="mt-3 space-y-1.5 border-border border-t pt-3 text-[13px] text-foreground/85 leading-snug">
-                  {job.score.reasons.map((r) => (
-                    <li key={r} className="flex gap-2">
-                      <span className="text-primary">›</span>
-                      {r}
-                    </li>
-                  ))}
-                </ul>
+              {job.score?.verdict ? (
+                <VerdictPanel verdict={job.score.verdict} />
+              ) : (
+                job.score?.reasons &&
+                job.score.reasons.length > 0 && (
+                  <ul className="mt-3 space-y-1.5 border-border border-t pt-3 text-[13px] text-foreground/85 leading-snug">
+                    {job.score.reasons.map((r) => (
+                      <li key={r} className="flex gap-2">
+                        <span className="text-primary">›</span>
+                        {r}
+                      </li>
+                    ))}
+                  </ul>
+                )
               )}
             </div>
 

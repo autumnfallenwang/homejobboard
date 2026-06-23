@@ -18,3 +18,8 @@ SDK pointed at `${LLM_GATEWAY_URL}/v1` (chat completions at `/v1/chat/completion
   (`llm_model_<task>` + `_fallback`), not hardcoded.
 - **Output:** prompt-based JSON (no tool-calling/response_format) → regex-extract `{…}` → validate;
   fall back to the fallback model on a primary error. See `apps/api/src/services/score.ts`.
+- **Anthropic-backend outages:** the `claude-*` models are proxied to Anthropic, so when the
+  gateway's Anthropic credential expires they return `HTTP 500 anthropic_auth_failed` ("Anthropic
+  token refresh failed: invalid_grant"). Our scoring then **silently falls back to the local model**
+  (e.g. `gemma4:26b`). So a "fallback/wrong model was used" or "claude unavailable" observation is
+  usually a gateway auth outage — **not an app bug**; the local models keep working. (Seen 2026-06-22.)
