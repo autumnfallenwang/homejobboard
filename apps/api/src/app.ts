@@ -8,6 +8,7 @@ import { scoreApp } from "./routes/score.js";
 import { settingsApp } from "./routes/settings.js";
 import { sourcesApp } from "./routes/sources.js";
 import { statsApp } from "./routes/stats.js";
+import { trackingApp } from "./routes/tracking.js";
 
 /** Build the Hono app. */
 export function createApp() {
@@ -30,6 +31,7 @@ export function createApp() {
 
   // Resource routes
   app.route("/jobs", jobsApp);
+  app.route("/tracking", trackingApp);
   app.route("/sources", sourcesApp);
   app.route("/stats", statsApp);
   app.route("/poll", pollApp);

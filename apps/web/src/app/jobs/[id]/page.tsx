@@ -2,6 +2,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionBar } from "@/components/action-bar";
+import { FollowUpPanel } from "@/components/followup-panel";
 import { MaterialsPanel } from "@/components/materials-panel";
 import { ScoreBadge } from "@/components/score-badge";
 import { VerdictPanel } from "@/components/verdict-panel";
@@ -103,6 +104,13 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
               jobId={job.id}
               applyUrl={job.applyUrl ?? job.url}
               initialStatus={job.status}
+            />
+
+            <FollowUpPanel
+              jobId={job.id}
+              status={job.status}
+              followUp={job.followUp}
+              followUpCount={job.followUpCount}
             />
 
             <MaterialsPanel jobId={job.id} />

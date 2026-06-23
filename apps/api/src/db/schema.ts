@@ -48,8 +48,15 @@ export const jobs = pgTable(
     fetchedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     dedupKey: text().notNull(),
     duplicateOfId: uuid(),
-    // Triage status: 'new' | 'applied' | 'dismissed' (app-level enum).
+    // Application lifecycle status (app-level enum, jobStatusSchema): new | applied |
+    // responded | interview | offer | rejected | discarded (M10).
     status: text().notNull().default("new"),
+    // Tracking timestamps (M10): when the app was first sent, when the current status
+    // was entered (cadence reference), and the last follow-up sent + count.
+    appliedAt: timestamp({ withTimezone: true }),
+    statusChangedAt: timestamp({ withTimezone: true }),
+    lastFollowUpAt: timestamp({ withTimezone: true }),
+    followUpCount: integer().notNull().default(0),
   },
   (table) => [
     unique("jobs_source_source_job_id_unique").on(table.source, table.sourceJobId),

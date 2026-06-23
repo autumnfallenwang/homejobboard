@@ -43,6 +43,11 @@ async function StatsTicker() {
       <span>
         applied <strong className="font-medium text-success">{stats.applied}</strong>
       </span>
+      {stats.overdue > 0 && (
+        <span>
+          overdue <strong className="font-medium text-primary">{stats.overdue}</strong>
+        </span>
+      )}
       {stats.unscored > 0 && (
         <span>
           unscored <strong className="font-medium text-warn">{stats.unscored}</strong>
@@ -71,6 +76,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <nav className="flex gap-4 font-mono text-muted text-xs uppercase tracking-widest">
               <Link href="/" className="transition-colors hover:text-primary">
                 Feed
+              </Link>
+              <Link href="/tracking" className="transition-colors hover:text-primary">
+                Tracking
               </Link>
               <Link href="/settings" className="transition-colors hover:text-primary">
                 Settings

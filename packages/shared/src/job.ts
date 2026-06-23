@@ -6,9 +6,41 @@ import { z } from "zod";
 export const workplaceTypeSchema = z.enum(["remote", "hybrid", "onsite"]);
 export type WorkplaceType = z.infer<typeof workplaceTypeSchema>;
 
-// Triage status set from the UI. `new` jobs show in the feed; applied/dismissed leave it.
-export const jobStatusSchema = z.enum(["new", "applied", "dismissed"]);
+// Application lifecycle status (M10). `new` = in the feed/inbox; the rest are the tracked
+// pipeline; `discarded` = not pursuing (the merged feed-dismiss + tracked-then-dropped state).
+// Names adopt career-ops's canonical states (ADR 0004).
+export const jobStatusSchema = z.enum([
+  "new",
+  "applied",
+  "responded",
+  "interview",
+  "offer",
+  "rejected",
+  "discarded",
+]);
 export type JobStatus = z.infer<typeof jobStatusSchema>;
+
+/** The tracked pipeline — engaged applications (excludes `new`, `rejected`, `discarded`). */
+export const ACTIVE_STATUSES = ["applied", "responded", "interview", "offer"] as const;
+
+// Forward lifecycle transitions. `*→discarded` (give up) and `*→new` (reset to inbox) are
+// always allowed; `canTransition` adds those plus same-status no-ops.
+export const STATUS_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
+  new: ["applied"],
+  applied: ["responded", "interview", "rejected"],
+  responded: ["interview", "rejected"],
+  interview: ["offer", "rejected"],
+  offer: ["rejected"],
+  rejected: [],
+  discarded: [],
+};
+
+/** Is `to` a legal next status from `from`? Reset-to-`new` and `*→discarded` are always allowed. */
+export function canTransition(from: JobStatus, to: JobStatus): boolean {
+  if (from === to) return true;
+  if (to === "new" || to === "discarded") return true;
+  return STATUS_TRANSITIONS[from].includes(to);
+}
 
 // Stage-1 output of a source adapter's `search()` — normalized listing fields.
 // Clean sources (ATS, RemoteOK, …) also fill `description` here, making their
@@ -66,6 +98,11 @@ export const jobSchema = z.object({
   dedupKey: z.string(),
   duplicateOfId: z.string().uuid().nullable(),
   status: jobStatusSchema,
+  // Tracking (M10): ISO timestamps for the lifecycle + follow-up cadence.
+  appliedAt: z.string().nullable(),
+  statusChangedAt: z.string().nullable(),
+  lastFollowUpAt: z.string().nullable(),
+  followUpCount: z.number().int(),
 });
 export type Job = z.infer<typeof jobSchema>;
 

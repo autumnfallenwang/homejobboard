@@ -29,6 +29,13 @@
       "when": 1782177056186,
       "tag": "0003_living_gunslinger",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782213792173,
+      "tag": "0004_giant_old_lace",
+      "breakpoints": true
     }
   ]
 }

@@ -1,13 +1,15 @@
 "use client";
 
-import type { JobStatus } from "@homejobboard/shared";
-import { Check, ExternalLink, RotateCcw, X } from "lucide-react";
+import { type JobStatus, STATUS_TRANSITIONS } from "@homejobboard/shared";
+import { ExternalLink, RotateCcw, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { setJobStatus } from "@/lib/api";
+import { statusMeta } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-/** Send-out + triage for a job: open apply link (and mark applied), dismiss, or reset. */
+/** Apply link + application-lifecycle controls: advance to the legal next statuses,
+ *  discard, or reset to the inbox. The state machine lives in @homejobboard/shared. */
 export function ActionBar({
   jobId,
   applyUrl,
@@ -32,6 +34,9 @@ export function ActionBar({
     }
   }
 
+  const forward = STATUS_TRANSITIONS[status]; // legal next pipeline statuses
+  const meta = statusMeta(status);
+
   return (
     <div className="space-y-2">
       <a
@@ -43,28 +48,39 @@ export function ActionBar({
       >
         <ExternalLink className="h-4 w-4" /> Apply now
       </a>
+
+      {forward.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {forward.map((next) => (
+            <button
+              key={next}
+              type="button"
+              disabled={busy}
+              onClick={() => update(next)}
+              className={cn(
+                "flex-1 rounded border px-2.5 py-1.5 font-mono text-xs uppercase tracking-wider transition-colors disabled:opacity-50",
+                next === "rejected"
+                  ? "border-border text-muted hover:border-primary/50 hover:text-primary"
+                  : "border-border hover:border-success/60 hover:text-success",
+              )}
+            >
+              → {statusMeta(next).label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="flex gap-2">
-        <button
-          type="button"
-          disabled={busy || status === "applied"}
-          onClick={() => update("applied")}
-          className={cn(
-            "flex flex-1 items-center justify-center gap-1.5 rounded border px-3 py-1.5 text-sm transition-colors disabled:opacity-50",
-            status === "applied"
-              ? "border-success/50 text-success"
-              : "border-border hover:border-success/60 hover:text-success",
-          )}
-        >
-          <Check className="h-4 w-4" /> Applied
-        </button>
-        <button
-          type="button"
-          disabled={busy || status === "dismissed"}
-          onClick={() => update("dismissed")}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded border border-border px-3 py-1.5 text-muted text-sm transition-colors hover:border-primary/60 hover:text-primary disabled:opacity-50"
-        >
-          <X className="h-4 w-4" /> Dismiss
-        </button>
+        {status !== "discarded" && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => update("discarded")}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded border border-border px-3 py-1.5 text-muted text-sm transition-colors hover:border-primary/60 hover:text-primary disabled:opacity-50"
+          >
+            <X className="h-4 w-4" /> Discard
+          </button>
+        )}
         {status !== "new" && (
           <button
             type="button"
@@ -77,8 +93,9 @@ export function ActionBar({
           </button>
         )}
       </div>
+
       <p className="font-mono text-[11px] text-muted uppercase tracking-widest">
-        status: <span className={cn(status !== "new" && "text-foreground")}>{status}</span>
+        status: <span className={cn(status !== "new" && meta.color)}>{meta.label}</span>
       </p>
     </div>
   );

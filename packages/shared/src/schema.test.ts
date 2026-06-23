@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { jobFiltersSchema } from "./filters.js";
-import { dedupKey, jobSchema } from "./job.js";
+import { canTransition, dedupKey, jobSchema, jobStatusSchema } from "./job.js";
 import { jobScoreSchema } from "./score.js";
 import { sourceConfigSchema, sourceKindSchema } from "./source.js";
 
@@ -25,6 +25,10 @@ const storedJob = {
   dedupKey: "stripe|software engineer|san francisco ca",
   duplicateOfId: null,
   status: "new",
+  appliedAt: null,
+  statusChangedAt: null,
+  lastFollowUpAt: null,
+  followUpCount: 0,
 };
 
 describe("jobSchema", () => {
@@ -50,6 +54,38 @@ describe("jobScoreSchema", () => {
     };
     expect(jobScoreSchema.safeParse({ ...base, fitness: 80 }).success).toBe(true);
     expect(jobScoreSchema.safeParse({ ...base, fitness: 150 }).success).toBe(false);
+  });
+});
+
+describe("jobStatusSchema + canTransition", () => {
+  it("accepts the full lifecycle and rejects the retired 'dismissed'", () => {
+    for (const s of [
+      "new",
+      "applied",
+      "responded",
+      "interview",
+      "offer",
+      "rejected",
+      "discarded",
+    ]) {
+      expect(jobStatusSchema.safeParse(s).success).toBe(true);
+    }
+    expect(jobStatusSchema.safeParse("dismissed").success).toBe(false);
+  });
+
+  it("allows forward transitions, reset-to-new, and give-up-to-discarded", () => {
+    expect(canTransition("new", "applied")).toBe(true);
+    expect(canTransition("applied", "responded")).toBe(true);
+    expect(canTransition("interview", "offer")).toBe(true);
+    expect(canTransition("offer", "discarded")).toBe(true); // give up
+    expect(canTransition("rejected", "new")).toBe(true); // reset
+    expect(canTransition("applied", "applied")).toBe(true); // no-op
+  });
+
+  it("rejects illegal forward jumps", () => {
+    expect(canTransition("offer", "applied")).toBe(false); // can't go backwards
+    expect(canTransition("new", "interview")).toBe(false); // must apply first
+    expect(canTransition("responded", "offer")).toBe(false); // must interview first
   });
 });
 

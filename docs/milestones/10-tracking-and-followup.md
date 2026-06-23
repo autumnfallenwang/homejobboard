@@ -1,6 +1,6 @@
 ---
 name: 10-tracking-and-followup
-status: proposed
+status: done
 created: 2026-06-22
 ---
 
@@ -40,11 +40,11 @@ else is the user updating status.
 
 ## Exit criteria
 
-- [ ] Tracking table + Zod enum cover the full canonical lifecycle; illegal transitions rejected
-- [ ] `cadence.ts` computes `nextFollowUpAt` / `overdue` from DB rows (unit tests on the ported math)
-- [ ] Web shows status per application + an overdue-follow-ups view; user can advance status
-- [ ] "Draft follow-up" returns an editable message via one llmgw call; nothing is auto-sent
-- [ ] `pnpm lint` / `typecheck` / `test:fast` / `build` green
+- [x] Tracking columns + Zod enum cover the full canonical lifecycle; illegal transitions rejected (`canTransition` guard in the PATCH route + unit-tested)
+- [x] `cadence.ts` computes `nextFollowUpAt` / `overdue` from DB rows (ported math, unit-tested; live-verified overdue)
+- [x] Web shows status per application + an overdue-follow-ups view (`/tracking`); user advances status from the detail ActionBar
+- [x] "Draft follow-up" returns an editable message via one llmgw call (live via the primary model); nothing is auto-sent
+- [x] `pnpm lint` / `typecheck` / `test:fast` (108) / `build` green
 
 ## Decisions (locked)
 
@@ -54,5 +54,45 @@ else is the user updating status.
 
 ## Open questions
 
-- Do `dismissed` (feed triage) and `Discarded` (tracked-then-dropped) stay distinct, or merge?
-- Default cadence values — keep career-ops's `DEFAULT_CADENCE` or retune for a single-user pace.
+- ~~dismissed vs Discarded~~ — resolved: **merged** into a single `discarded` (data migration renamed existing rows); `new` stays the inbox default.
+- ~~Default cadence values~~ — resolved: keep career-ops's `DEFAULT_CADENCE` (retune later if the single-user pace differs).
+
+## Progress
+
+- 2026-06-23: Shipped the tracking lifecycle + follow-up cadence (ADR 0004 Buckets A-logic + B).
+  `jobStatusSchema` is now the 7-state lifecycle (new → applied → responded → interview → offer →
+  rejected / discarded) with `STATUS_TRANSITIONS` + `canTransition` in `packages/shared`; the jobs
+  table gains `appliedAt`/`statusChangedAt`/`lastFollowUpAt`/`followUpCount` (migration `0004`, which
+  also migrates the retired `dismissed` → `discarded`). Ported the cadence math to
+  `apps/api/src/tracking/cadence.ts` (`DEFAULT_CADENCE`, `computeUrgency`, `computeNextFollowUpAt`,
+  `followUpInfo`); follow-up drafting in `tracking/followup.ts` (career-ops `followup.md` guardrails,
+  mirrors M09). Routes: PATCH transition guard, `POST /jobs/:id/followup{,-draft}`, `GET /tracking`.
+  Web: lifecycle ActionBar, a `FollowUpPanel` (cadence + draft + mark-sent), a `/tracking` overdue-first
+  page, an overdue header badge, and the Dismissed→Discarded tab rename. lint / typecheck / test:fast
+  (108) / build green.
+- 2026-06-23: **Live smoke** (real DB + primary model) — new→applied stamped `appliedAt`; backdating it
+  10 days made the job `overdue` (next-follow-up = applied + 7d); `feedStats.overdue` = 1; `/tracking`
+  listed it overdue-first; the follow-up draft generated via the **primary `claude-sonnet-4-5`** —
+  grounded and faithful (referenced the role + ~10-day timing, led with the CV's "p95 38%" metric, soft
+  ask, no banned phrases). Smoke caught + fixed a real bug: `setJobStatus`'s `coalesce(applied_at, $date)`
+  raw-SQL form failed to bind the Date (postgres-js) → reworked to a fetch-then-set (drizzle serializes
+  the Date correctly).
+
+## Outcome
+
+**Closed: 2026-06-23.** Shipped the track/learn lifecycle (ADR 0004 Buckets A-logic + B). `jobs.status`
+became the 7-state canonical lifecycle (`new → applied → responded → interview → offer → rejected /
+discarded`) with a shared `STATUS_TRANSITIONS` + `canTransition` guard (enforced in the PATCH route) and
+four tracking columns (migration `0004`, which also merged the retired `dismissed` → `discarded`).
+Ported career-ops's cadence math (`apps/api/src/tracking/cadence.ts`) to compute `nextFollowUpAt` /
+`overdue` per application, and follow-up drafting (`tracking/followup.ts`) as one llmgw call with the
+`followup.md` guardrails. Web gained lifecycle controls, a follow-up panel (draft + mark-sent), and a
+`/tracking` overdue-first view + header badge. lint / typecheck / test:fast (108) / build green;
+live-verified end-to-end through the primary `claude-sonnet-4-5` (lifecycle, overdue cadence, grounded
+follow-up draft).
+
+**Decisions:** extended `jobs.status` rather than a separate applications table (fits the pervasive
+existing usage); merged `dismissed`→`discarded`; kept career-ops `DEFAULT_CADENCE`. A smoke-caught
+drizzle/postgres-js Date-binding bug in `setJobStatus` was fixed and captured: [[drizzle-date-in-raw-sql]].
+
+**Deferred (milestone open Q resolved):** cadence retuning for single-user pace — revisit if needed.

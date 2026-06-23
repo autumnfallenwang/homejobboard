@@ -25,13 +25,13 @@ type SearchParams = Promise<{
 const STATUSES = [
   { key: "new", label: "Inbox" },
   { key: "applied", label: "Applied" },
-  { key: "dismissed", label: "Dismissed" },
+  { key: "discarded", label: "Discarded" },
 ] as const;
 
 export default async function Feed({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams;
   const sort: FeedQuery["sort"] = sp.sort === "rank" ? "rank" : "recent";
-  const status = (["new", "applied", "dismissed"] as const).find((s) => s === sp.status) ?? "new";
+  const status = (["new", "applied", "discarded"] as const).find((s) => s === sp.status) ?? "new";
   const q = sp.q?.trim() || undefined;
   const source = sp.source?.trim() || undefined;
   const minScore = Number(sp.minScore) > 0 ? Number(sp.minScore) : undefined;
@@ -67,7 +67,7 @@ export default async function Feed({ searchParams }: { searchParams: SearchParam
   const counts: Record<string, number | undefined> = {
     new: stats?.new,
     applied: stats?.applied,
-    dismissed: stats?.dismissed,
+    discarded: stats?.discarded,
   };
 
   return (

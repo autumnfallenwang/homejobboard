@@ -1,6 +1,6 @@
 // Presentation helpers — pure, unit-tested.
 
-import type { FitnessRecommendation } from "@homejobboard/shared";
+import type { FitnessRecommendation, JobStatus, Urgency } from "@homejobboard/shared";
 
 /** "just now" / "3h ago" / "2d ago" from an ISO string (or "" when absent). */
 export function formatRelativeTime(iso: string | null | undefined, now: Date = new Date()): string {
@@ -49,6 +49,33 @@ export function subScoreFill(n: number): string {
   if (n >= 3) return "bg-foreground";
   if (n >= 2) return "bg-warn";
   return "bg-muted";
+}
+
+const STATUS_META: Record<JobStatus, { label: string; color: string }> = {
+  new: { label: "Inbox", color: "text-muted" },
+  applied: { label: "Applied", color: "text-success" },
+  responded: { label: "Responded", color: "text-foreground" },
+  interview: { label: "Interview", color: "text-primary" },
+  offer: { label: "Offer", color: "text-success" },
+  rejected: { label: "Rejected", color: "text-muted" },
+  discarded: { label: "Discarded", color: "text-muted" },
+};
+
+/** Display label + text color for an application status. */
+export function statusMeta(s: JobStatus): { label: string; color: string } {
+  return STATUS_META[s];
+}
+
+const URGENCY_META: Record<Urgency, { label: string; color: string }> = {
+  overdue: { label: "overdue", color: "text-primary border-primary/40" },
+  urgent: { label: "due now", color: "text-warn border-warn/40" },
+  waiting: { label: "on track", color: "text-muted border-border" },
+  cold: { label: "cold", color: "text-muted border-border/60" },
+};
+
+/** Display label + chip color for a follow-up urgency. */
+export function urgencyMeta(u: Urgency): { label: string; color: string } {
+  return URGENCY_META[u];
 }
 
 /** "$120k", "$85" (sub-1k values untouched). */

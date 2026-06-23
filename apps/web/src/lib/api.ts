@@ -3,6 +3,8 @@
 
 import type {
   CreateSource,
+  FeedStats,
+  FollowUpInfo,
   Job,
   JobScore,
   JobStatus,
@@ -10,20 +12,22 @@ import type {
   SourceConfig,
 } from "@homejobboard/shared";
 
+export type { FeedStats };
+
 /** A job as returned by the feed/detail endpoints: the row plus its score (nullable). */
-export type FeedJob = Job & { score: JobScore | null; rank?: number };
-/** The detail endpoint adds the duplicate listings folded into this job. */
+export type FeedJob = Job & {
+  score: JobScore | null;
+  rank?: number;
+  followUp?: FollowUpInfo | null;
+};
+/** The detail endpoint adds the duplicate listings folded into this job + follow-up cadence. */
 export type JobDetailResponse = FeedJob & {
   alsoSeenOn: Array<{ id: string; source: string; url: string }>;
+  followUp: FollowUpInfo | null;
 };
+/** A tracked application: the job row + its computed follow-up cadence. */
+export type TrackedJob = Job & { followUp: FollowUpInfo | null };
 export type SettingRow = { key: string; value: string };
-export type FeedStats = {
-  new: number;
-  applied: number;
-  dismissed: number;
-  unscored: number;
-  lastPolledAt: string | null;
-};
 
 /**
  * Dual-context base URL: server (SSR) prefers in-cluster `API_URL`, browser uses the
@@ -113,6 +117,23 @@ export function getStats(): Promise<FeedStats> {
 
 export function setJobStatus(id: string, status: JobStatus): Promise<Job> {
   return request<Job>(`/jobs/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+}
+
+// --- Tracking / follow-ups ---
+
+/** The engaged application pipeline, overdue follow-ups first. */
+export function getTracking(): Promise<TrackedJob[]> {
+  return request<TrackedJob[]>("/tracking");
+}
+
+/** Record that a follow-up was sent (bumps the cadence). */
+export function logFollowUp(id: string): Promise<JobDetailResponse> {
+  return request<JobDetailResponse>(`/jobs/${id}/followup`, { method: "POST", body: "{}" });
+}
+
+/** Draft an editable follow-up message (one llmgw call). Never auto-sent. */
+export function draftFollowUp(id: string): Promise<{ content: string; model: string }> {
+  return request(`/jobs/${id}/followup-draft`, { method: "POST", body: "{}" });
 }
 
 // --- Sources ---

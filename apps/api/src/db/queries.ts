@@ -1,5 +1,13 @@
-import { composite, freshness, type JobStatus } from "@homejobboard/shared";
-import { and, count, desc, eq, ilike, isNull, like, max, or, sql } from "drizzle-orm";
+import {
+  ACTIVE_STATUSES,
+  composite,
+  type FeedStats,
+  type FollowUpInfo,
+  freshness,
+  type JobStatus,
+} from "@homejobboard/shared";
+import { and, count, desc, eq, ilike, inArray, isNull, like, max, or, sql } from "drizzle-orm";
+import { followUpInfo } from "../tracking/cadence.js";
 import type { Database } from "./index.js";
 import { jobScores, jobs, sources } from "./schema.js";
 
@@ -10,6 +18,18 @@ export type NewScore = typeof jobScores.$inferInsert;
 export type ScoreRow = typeof jobScores.$inferSelect;
 export type RankedJob = JobRow & { score: ScoreRow; rank: number };
 export type FeedJob = JobRow & { score: ScoreRow | null; rank: number };
+export type TrackedJob = JobRow & { followUp: FollowUpInfo | null };
+
+/** A JobRow's tracking fields shaped for the cadence calculator. */
+function cadenceRow(r: JobRow) {
+  return {
+    status: r.status as JobStatus,
+    appliedAt: r.appliedAt,
+    statusChangedAt: r.statusChangedAt,
+    lastFollowUpAt: r.lastFollowUpAt,
+    followUpCount: r.followUpCount,
+  };
+}
 
 /** Bulk-insert jobs, skipping rows whose (source, sourceJobId) already exists.
  *  Returns the rows actually inserted ("new" jobs). */
@@ -249,15 +269,8 @@ export function listDuplicatesOf(
     .where(eq(jobs.duplicateOfId, canonicalId));
 }
 
-export interface FeedStats {
-  new: number;
-  applied: number;
-  dismissed: number;
-  unscored: number;
-  lastPolledAt: string | null;
-}
-
-/** Header stats: triage counts (non-duplicate), unscored backlog, most recent poll. */
+/** Header stats: per-status pipeline counts (non-duplicate), unscored backlog, overdue
+ *  follow-ups, most recent poll. */
 export async function feedStats(db: Database): Promise<FeedStats> {
   const byStatus = await db
     .select({ status: jobs.status, n: count() })
@@ -272,22 +285,76 @@ export async function feedStats(db: Database): Promise<FeedStats> {
     .where(and(isNull(jobs.duplicateOfId), isNull(jobScores.id)));
 
   const [poll] = await db.select({ at: max(sources.lastPolledAt) }).from(sources);
+  const overdue = (await listTracking(db)).filter((j) => j.followUp?.overdue).length;
 
-  const get = (s: string) => byStatus.find((r) => r.status === s)?.n ?? 0;
+  const get = (s: JobStatus) => byStatus.find((r) => r.status === s)?.n ?? 0;
   return {
     new: get("new"),
     applied: get("applied"),
-    dismissed: get("dismissed"),
+    responded: get("responded"),
+    interview: get("interview"),
+    offer: get("offer"),
+    rejected: get("rejected"),
+    discarded: get("discarded"),
     unscored: unscored?.n ?? 0,
+    overdue,
     lastPolledAt: poll?.at ? poll.at.toISOString() : null,
   };
 }
 
+/** Advance a job's status; stamps `statusChangedAt`, and `appliedAt` the first time it
+ *  enters `applied`. Transition legality is enforced at the route layer. */
 export async function setJobStatus(
   db: Database,
   id: string,
   status: JobStatus,
 ): Promise<JobRow | undefined> {
-  const [row] = await db.update(jobs).set({ status }).where(eq(jobs.id, id)).returning();
+  const at = new Date();
+  const patch: Partial<NewJob> = { status, statusChangedAt: at };
+  // Stamp appliedAt the first time the job enters `applied` (keep the original date on re-entry).
+  if (status === "applied") {
+    const [cur] = await db
+      .select({ appliedAt: jobs.appliedAt })
+      .from(jobs)
+      .where(eq(jobs.id, id))
+      .limit(1);
+    if (cur && cur.appliedAt == null) patch.appliedAt = at;
+  }
+  const [row] = await db.update(jobs).set(patch).where(eq(jobs.id, id)).returning();
   return row;
+}
+
+/** Record a sent follow-up: bump the count + stamp `lastFollowUpAt`. */
+export async function logFollowUp(db: Database, id: string): Promise<JobRow | undefined> {
+  const [row] = await db
+    .update(jobs)
+    .set({ lastFollowUpAt: new Date(), followUpCount: sql`${jobs.followUpCount} + 1` })
+    .where(eq(jobs.id, id))
+    .returning();
+  return row;
+}
+
+/** The tracked pipeline: engaged (non-duplicate) applications annotated with cadence,
+ *  overdue first then soonest-due. */
+export async function listTracking(db: Database): Promise<TrackedJob[]> {
+  const rows = await db
+    .select()
+    .from(jobs)
+    .where(and(isNull(jobs.duplicateOfId), inArray(jobs.status, [...ACTIVE_STATUSES])));
+  const now = new Date();
+  return rows
+    .map((r) => ({ ...r, followUp: followUpInfo(cadenceRow(r), now) }))
+    .sort((a, b) => {
+      const ao = a.followUp?.overdue ? 0 : 1;
+      const bo = b.followUp?.overdue ? 0 : 1;
+      if (ao !== bo) return ao - bo;
+      const at = a.followUp?.nextFollowUpAt ?? "9999";
+      const bt = b.followUp?.nextFollowUpAt ?? "9999";
+      return at.localeCompare(bt);
+    });
+}
+
+/** Cadence for one job (detail view), or null for statuses without a follow-up cadence. */
+export function jobFollowUp(row: JobRow, now: Date = new Date()): FollowUpInfo | null {
+  return followUpInfo(cadenceRow(row), now);
 }
